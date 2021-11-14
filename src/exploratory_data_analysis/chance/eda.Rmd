@@ -84,6 +84,16 @@ train.c1 %>%
 
 ```
 
+```{r}
+train.c1 %>%
+  ggplot(aes(x=month, y=count, fill=month)) + 
+  geom_boxplot() + 
+  ggtitle("Bar Plot of Average Bike Rentals by Month") +
+  labs(x = "Month", y = "Average") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+
 
 ```{r}
 
@@ -99,6 +109,15 @@ train.c1 %>%
 ```
 
 ```{r}
+train.c1 %>%
+  ggplot(aes(x=season, y=count, fill=season)) + 
+  geom_boxplot() + 
+  ggtitle("Bar Plot of Average Bike Rentals by Season") +
+  labs(x = "Season", y = "Average") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r}
 
 train.c1 %>%
   remove_missing(na.rm = TRUE) %>%
@@ -110,6 +129,16 @@ train.c1 %>%
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 ```
+```{r}
+train.c1 %>%
+  ggplot(aes(x=hour, y=count, fill=hour)) + 
+  geom_boxplot() + 
+  ggtitle("Bar Plot of Average Bike Rentals by Hour") +
+  labs(x = "Hour", y = "Average") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+
 
 ```{r}
 
@@ -127,10 +156,33 @@ train.c1 %>%
 ```{r}
 
 train.c1 %>%
+  ggplot(aes(x=weather, y=count, fill=weather)) + 
+  geom_boxplot() + 
+  ggtitle("Bar Plot of Average Bike Rentals by Weather") +
+  labs(x = "Weather", y = "Average") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+```{r}
+
+train.c1 %>%
   remove_missing(na.rm = TRUE) %>%
   group_by(workingday) %>%
   ggplot(aes(x = workingday, y = count, fill=workingday)) +
   geom_bar(position = "dodge", stat = "summary", fun = "mean") +
+  ggtitle("Bar Plot of Average Bike Rentals by Working Day") +
+  labs(x = "Working Day", y = "Average") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+
+```{r}
+
+train.c1 %>%
+  ggplot(aes(x=workingday, y=count, fill=workingday)) + 
+  geom_boxplot() + 
   ggtitle("Bar Plot of Average Bike Rentals by Working Day") +
   labs(x = "Working Day", y = "Average") + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
@@ -152,6 +204,17 @@ train.c1 %>%
 
 ```{r}
 
+train.c1 %>%
+  ggplot(aes(x=holiday, y=count, fill=holiday)) + 
+  geom_boxplot() + 
+  ggtitle("Bar Plot of Average Bike Rentals by Holiday") +
+  labs(x = "Holiday", y = "Average") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+```{r}
+
 train.c1.numeric <- train.c1 %>%
   select_if(is.numeric)
 
@@ -161,6 +224,17 @@ ggcorrplot(corr, method = "circle")
 
 
 ```
+
+```{r}
+train.c1 %>%
+  ggplot(aes(x = registered, y = count)) + 
+  geom_point(alpha = 0.3) + 
+  geom_smooth(method = 'lm') + 
+  ggtitle("Line Chart of Counts by Registered Users") +
+  labs(x = "Registered", y = "Count")
+  
+```
+
 
 ```{r}
 
