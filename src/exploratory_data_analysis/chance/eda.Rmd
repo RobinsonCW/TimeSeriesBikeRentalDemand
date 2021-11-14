@@ -71,8 +71,84 @@ test.c1 <- test.c1 %>%
 ```
 
 
+```{r}
+
+train.c1 %>%
+  remove_missing(na.rm = TRUE) %>%
+  group_by(month) %>%
+  ggplot(aes(x = month, y = count, fill=month)) +
+  geom_bar(position = "dodge", stat = "summary", fun = "mean") +
+  ggtitle("Bar Plot of Average Bike Rentals by Month") +
+  labs(x = "Month", y = "Average") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
 
 
+```{r}
+
+train.c1 %>%
+  remove_missing(na.rm = TRUE) %>%
+  group_by(season) %>%
+  ggplot(aes(x = season, y = count, fill=season)) +
+  geom_bar(position = "dodge", stat = "summary", fun = "mean") +
+  ggtitle("Bar Plot of Average Bike Rentals by Season") +
+  labs(x = "Season", y = "Average") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+```{r}
+
+train.c1 %>%
+  remove_missing(na.rm = TRUE) %>%
+  group_by(hour) %>%
+  ggplot(aes(x = hour, y = count, fill=hour)) +
+  geom_bar(position = "dodge", stat = "summary", fun = "mean") +
+  ggtitle("Bar Plot of Average Bike Rentals by Hour") +
+  labs(x = "Hour", y = "Average") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+```{r}
+
+train.c1 %>%
+  remove_missing(na.rm = TRUE) %>%
+  group_by(weather) %>%
+  ggplot(aes(x = weather, y = count, fill=weather)) +
+  geom_bar(position = "dodge", stat = "summary", fun = "mean") +
+  ggtitle("Bar Plot of Average Bike Rentals by Weather") +
+  labs(x = "Weather", y = "Average") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+```{r}
+
+train.c1 %>%
+  remove_missing(na.rm = TRUE) %>%
+  group_by(workingday) %>%
+  ggplot(aes(x = workingday, y = count, fill=workingday)) +
+  geom_bar(position = "dodge", stat = "summary", fun = "mean") +
+  ggtitle("Bar Plot of Average Bike Rentals by Working Day") +
+  labs(x = "Working Day", y = "Average") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+```{r}
+
+train.c1 %>%
+  remove_missing(na.rm = TRUE) %>%
+  group_by(holiday) %>%
+  ggplot(aes(x = holiday, y = count, fill=holiday)) +
+  geom_bar(position = "dodge", stat = "summary", fun = "mean") +
+  ggtitle("Bar Plot of Average Bike Rentals by Holiday") +
+  labs(x = "Holiday", y = "Average") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
 
 ```{r}
 
@@ -85,4 +161,137 @@ ggcorrplot(corr, method = "circle")
 
 
 ```
+
+```{r}
+
+train.2012.june <-  train.c1 %>%
+  filter(train.c1$year == 2012 & train.c1$month == "June")
+
+```
+
+
+
+```{r}
+
+ggplot(data=train.2012.june, aes(x = datetime, y = count)) +
+      geom_line() + 
+      ggtitle("Hourly Rental Trends for June 2012") +
+      labs(x = "Time", y = "Count")
+
+```
+
+
+```{r}
+
+plotts.sample.wge(train.2012.june$count)
+
+```
+
+```{r}
+
+count.d1 = artrans.wge(train.2012.june$count, phi.tr = 1)
+
+plotts.sample.wge(count.d1)
+
+
+```
+
+```{r}
+
+# aic5.wge(train.2012.june$count, p=0:15, q=0:2, type = "bic") # BIC picks ARMA (15,0)
+# aic5.wge(train.2012.june$count, p=15:25, q=0:2, type = "bic") # BIC picks ARMA (25,1)
+# aic5.wge(train.2012.june$count, p=26:30, q=0:2, type = "bic") # BIC picks ARMA (26,0)
+
+# aic5.wge(train.2012.june$count, p=24:26, q=0:5, type = "bic") # BIC picks ARMA (25,1)
+# aic5.wge(train.2012.june$count, p=24:50, q=0:2, type = "bic") # BIC picks ARMA (25,1)
+
+# aic5.wge(train.2012.june$count, p=0:15, q=0:2, type = "aic") # AIC picks ARMA (15,1)
+# aic5.wge(train.2012.june$count, p=15:25, q=0:2, type = "aic") # AIC picks ARMA (24,2)
+# aic5.wge(train.2012.june$count, p=26:30, q=0:2, type = "aic") # AIC picks ARMA (30, 1)
+
+```
+
+
+```{r}
+
+# factor.wge(c=(rep(0,7), 1))
+
+```
+
+
+
+```{r}
+
+est.2012.june = est.arma.wge(train.2012.june$count, p=25, q=1)
+
+est.2012.june$phi
+est.2012.june$avar
+
+mean(train.2012.june$count)
+
+```
+
+```{r}
+
+# 7 day forecast
+
+no_ahead = 24 * 7
+
+len_of_obs = length(train.2012.june$datetime)
+
+forecast.2012.june = fore.aruma.wge(train.2012.june$count, phi = est.2012.june$phi, theta = est.2012.june$theta, n.ahead = no_ahead, lastn = TRUE, limits = FALSE)
+
+ase.2012.june = mean((train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs] - forecast.2012.june$f)^2)
+ase.2012.june
+
+rmse.2012.june = RMSE(y_true = train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs], y_pred = forecast.2012.june$f)
+rmse.2012.june
+
+
+```
+
+```{r}
+
+# 1 day forecast
+
+no_ahead = 24
+
+len_of_obs = length(train.2012.june$datetime)
+
+forecast.2012.june = fore.aruma.wge(train.2012.june$count, phi = est.2012.june$phi, theta = est.2012.june$theta, n.ahead = no_ahead, lastn = TRUE, limits = FALSE)
+
+ase.2012.june = mean((train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs] - forecast.2012.june$f)^2)
+ase.2012.june
+
+rmse.2012.june = RMSE(y_true = train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs], y_pred = forecast.2012.june$f)
+rmse.2012.june
+
+
+```
+
+
+```{r}
+
+predictions = round(forecast.2012.june$f)
+actuals = train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs]
+
+preds.v.actuals.2012.june <- data.frame(predictions, actuals)    # Apply data.frame function
+
+
+preds.v.actuals.2012.june <- preds.v.actuals.2012.june %>%
+  mutate(diff = (round(predictions) - actuals)) %>%
+  mutate(abs.diff = abs(round(predictions) - actuals))
+
+preds.v.actuals.2012.june
+
+```
+
+
+
+
+
+
+
+
+
 
