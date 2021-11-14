@@ -1,0 +1,88 @@
+---
+title: "R Notebook"
+---
+
+
+```{r library-imports, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+
+# Time Series Analysis
+library(tseries)
+library(forecast)
+library(TSstudio)
+library(tswge)
+library(orcutt)
+library(vars)
+
+# Date Manipulation
+library(lubridate)
+
+# Metrics
+library(MLmetrics)
+
+# Correlation Matrix
+library(ggcorrplot)
+
+# Misc
+library(tidyverse)
+library(kableExtra)
+library(knitr)
+
+```
+
+
+```{r load-data}
+
+train <- read.csv("../../../data/train.csv")
+
+test <- read.csv("../../../data/test.csv")
+
+# copy the test and train data sets for EDA
+
+train.c1 <- train
+test.c1 <- test
+
+train.c1$datetime = ymd_hms(train.c1$datetime)
+test.c1$datetime = ymd_hms(test.c1$datetime)
+
+train.c1 <- train.c1 %>%
+  mutate(year = as.factor(format(datetime, format = "%Y")),
+         # month = as.factor(format(datetime, format = "%m")),
+         month = month(train.c1$datetime, label = TRUE, abbr = FALSE),
+         day = as.factor(format(datetime, format = "%d")),
+         hour = as.factor(format(datetime, format = "%H")),
+         season = factor(season, labels = c("Spring", "Summer", "Fall", "Winter")),
+         holiday = factor(holiday, labels = c("No", "Yes")),
+         workingday = factor(workingday, labels = c("No", "Yes")),
+         weather = factor(weather, labels = c("Great", "Good", "Average", "Poor")))
+
+
+test.c1 <- test.c1 %>%
+  mutate(year = as.factor(format(datetime, format = "%Y")),
+         # month = as.factor(format(datetime, format = "%m")),
+         month = month(test.c1$datetime, label = TRUE, abbr = FALSE),
+         day = as.factor(format(datetime, format = "%d")),
+         hour = as.factor(format(datetime, format = "%H")),
+         season = factor(season, labels = c("Spring", "Summer", "Fall", "Winter")),
+         holiday = factor(holiday, labels = c("No", "Yes")),
+         workingday = factor(workingday, labels = c("No", "Yes")),
+         weather = factor(weather, labels = c("Great", "Good", "Average", "Poor")))
+
+
+```
+
+
+
+
+
+```{r}
+
+train.c1.numeric <- train.c1 %>%
+  select_if(is.numeric)
+
+corr <- round(cor(train.c1.numeric), 1)
+  
+ggcorrplot(corr, method = "circle")
+
+
+```
+
