@@ -71,6 +71,26 @@ test.c1 <- test.c1 %>%
 ```
 
 
+
+
+  Column Name        |Type                  |Description
+  -------------------|--------------------- |------------------------------------------------
+  1.  datetime       |    Character         | YYYY-MM-DD HH24 (example:  2011-01-01 04:00:00)
+  2.  season         |    Integer 		      | (1-4)
+  3.  holiday        |    Integer 		      | (0 or 1)
+  4.  workingday     |    Integer 		      | (0 or 1)
+  5.  weather        |    Integer 		      | (1-4)
+  6.  temp           |    Float 			      | temparture in Celcius
+  7.  atemp          |    Float 			      | "feels like" temperature in Celsius
+  8.  humidity       |    Integer           | relative humidity
+  9.  windspeed      |    Float             | wind speed
+  10. __casual__     |    Integer 		      | count of casual users 
+  11. __registered__ |    Integer 		      | count of registered users 
+  12. __count__      |    Integer 		      | count of total users (*primary response variable*)
+  
+
+
+
 ```{r}
 
 train.c1 %>%
@@ -78,7 +98,7 @@ train.c1 %>%
   group_by(month) %>%
   ggplot(aes(x = month, y = count, fill=month)) +
   geom_bar(position = "dodge", stat = "summary", fun = "mean") +
-  ggtitle("Bar Plot of Average Bike Rentals by Month") +
+  ggtitle("Bar Plot of Average Hourly Bike Rentals by Month") +
   labs(x = "Month", y = "Average") + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
@@ -88,7 +108,7 @@ train.c1 %>%
 train.c1 %>%
   ggplot(aes(x=month, y=count, fill=month)) + 
   geom_boxplot() + 
-  ggtitle("Bar Plot of Average Bike Rentals by Month") +
+  ggtitle("Box Plot of Bike Rentals by Month") +
   labs(x = "Month", y = "Average") + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
@@ -102,7 +122,7 @@ train.c1 %>%
   group_by(season) %>%
   ggplot(aes(x = season, y = count, fill=season)) +
   geom_bar(position = "dodge", stat = "summary", fun = "mean") +
-  ggtitle("Bar Plot of Average Bike Rentals by Season") +
+  ggtitle("Bar Plot of Average Hourly Bike Rentals by Season") +
   labs(x = "Season", y = "Average") + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
@@ -112,7 +132,7 @@ train.c1 %>%
 train.c1 %>%
   ggplot(aes(x=season, y=count, fill=season)) + 
   geom_boxplot() + 
-  ggtitle("Bar Plot of Average Bike Rentals by Season") +
+  ggtitle("Box Plot of Bike Rentals by Season") +
   labs(x = "Season", y = "Average") + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
@@ -133,7 +153,7 @@ train.c1 %>%
 train.c1 %>%
   ggplot(aes(x=hour, y=count, fill=hour)) + 
   geom_boxplot() + 
-  ggtitle("Bar Plot of Average Bike Rentals by Hour") +
+  ggtitle("Box Plot of Bike Rentals by Hour") +
   labs(x = "Hour", y = "Average") + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
@@ -147,7 +167,7 @@ train.c1 %>%
   group_by(weather) %>%
   ggplot(aes(x = weather, y = count, fill=weather)) +
   geom_bar(position = "dodge", stat = "summary", fun = "mean") +
-  ggtitle("Bar Plot of Average Bike Rentals by Weather") +
+  ggtitle("Bar Plot of Average Hourly Bike Rentals by Weather") +
   labs(x = "Weather", y = "Average") + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
@@ -158,7 +178,7 @@ train.c1 %>%
 train.c1 %>%
   ggplot(aes(x=weather, y=count, fill=weather)) + 
   geom_boxplot() + 
-  ggtitle("Bar Plot of Average Bike Rentals by Weather") +
+  ggtitle("Box Plot of Bike Rentals by Weather") +
   labs(x = "Weather", y = "Average") + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
@@ -171,7 +191,7 @@ train.c1 %>%
   group_by(workingday) %>%
   ggplot(aes(x = workingday, y = count, fill=workingday)) +
   geom_bar(position = "dodge", stat = "summary", fun = "mean") +
-  ggtitle("Bar Plot of Average Bike Rentals by Working Day") +
+  ggtitle("Bar Plot of Average Hourly Bike Rentals by Working Day") +
   labs(x = "Working Day", y = "Average") + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
@@ -183,7 +203,7 @@ train.c1 %>%
 train.c1 %>%
   ggplot(aes(x=workingday, y=count, fill=workingday)) + 
   geom_boxplot() + 
-  ggtitle("Bar Plot of Average Bike Rentals by Working Day") +
+  ggtitle("Box Plot of Bike Rentals by Working Day") +
   labs(x = "Working Day", y = "Average") + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
@@ -196,7 +216,7 @@ train.c1 %>%
   group_by(holiday) %>%
   ggplot(aes(x = holiday, y = count, fill=holiday)) +
   geom_bar(position = "dodge", stat = "summary", fun = "mean") +
-  ggtitle("Bar Plot of Average Bike Rentals by Holiday") +
+  ggtitle("Bar Plot of Average Hourly Bike Rentals by Holiday") +
   labs(x = "Holiday", y = "Average") + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
@@ -207,7 +227,7 @@ train.c1 %>%
 train.c1 %>%
   ggplot(aes(x=holiday, y=count, fill=holiday)) + 
   geom_boxplot() + 
-  ggtitle("Bar Plot of Average Bike Rentals by Holiday") +
+  ggtitle("Box Plot of Bike Rentals by Holiday") +
   labs(x = "Holiday", y = "Average") + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
@@ -262,6 +282,17 @@ plotts.sample.wge(train.2012.june$count)
 ```
 
 ```{r}
+Acf(train.2012.june$count, lag.max = 50)
+```
+
+```{r}
+
+plotts.parzen.wge(train.2012.june$count)
+
+```
+
+
+```{r}
 
 count.d1 = artrans.wge(train.2012.june$count, phi.tr = 1)
 
@@ -272,12 +303,12 @@ plotts.sample.wge(count.d1)
 
 ```{r}
 
-# aic5.wge(train.2012.june$count, p=0:15, q=0:2, type = "bic") # BIC picks ARMA (15,0)
-# aic5.wge(train.2012.june$count, p=15:25, q=0:2, type = "bic") # BIC picks ARMA (25,1)
+# aic5.wge(train.2012.june$count, p=0:2, q=0:2, type = "aic") # BIC picks ARMA (15,0)
+# aic5.wge(train.2012.june$count, p=24:26, q=0:2, type = "aic") # BIC picks ARMA (25,1)
 # aic5.wge(train.2012.june$count, p=26:30, q=0:2, type = "bic") # BIC picks ARMA (26,0)
 
-# aic5.wge(train.2012.june$count, p=24:26, q=0:5, type = "bic") # BIC picks ARMA (25,1)
-# aic5.wge(train.2012.june$count, p=24:50, q=0:2, type = "bic") # BIC picks ARMA (25,1)
+# aic5.wge(train.2012.june$count, p=24:26, q=0:5, type = "bic") # BIC picks ARMA (26,0)
+# aic5.wge(train.2012.june$count, p=24:26, q=0:2, type = "aic") # BIC picks ARMA (26,4)
 
 # aic5.wge(train.2012.june$count, p=0:15, q=0:2, type = "aic") # AIC picks ARMA (15,1)
 # aic5.wge(train.2012.june$count, p=15:25, q=0:2, type = "aic") # AIC picks ARMA (24,2)
@@ -299,11 +330,23 @@ plotts.sample.wge(count.d1)
 est.2012.june = est.arma.wge(train.2012.june$count, p=25, q=1)
 
 est.2012.june$phi
+est.2012.june$theta
 est.2012.june$avar
 
 mean(train.2012.june$count)
 
 ```
+
+
+$$\begin{equation}
+   (1-0.80B+0.15B^2+0.04B^3-0.05B^4+0.02B^5+0.09B^6-0.09B^7+0.30B^8-0.34B^9+0.10B^{10}+0.12B^{11}-0.06B^{12}+0.03B^{13} + 0.05B^{14}-0.09B^{15}+0.20B^{16}-0.16B^{17}+0.05B^{18}+0.10B^{19}-0.06B^{20}-0.003B^{21}+0.06B^{22}-0.13B^{23}-0.45B^{24}+0.31B^{25})(X_t - 287.18) = (1+0.30B)a_t; \sigma^2 = 5623.31
+\end{equation}$$
+
+
+```{r}
+plotts.wge(est.2012.june$res)
+```
+
 
 ```{r}
 
@@ -321,6 +364,22 @@ ase.2012.june
 rmse.2012.june = RMSE(y_true = train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs], y_pred = forecast.2012.june$f)
 rmse.2012.june
 
+
+```
+
+```{r}
+
+predictions = round(forecast.2012.june$f)
+actuals = train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs]
+
+preds.v.actuals.2012.june <- data.frame(predictions, actuals)    # Apply data.frame function
+
+
+preds.v.actuals.2012.june <- preds.v.actuals.2012.june %>%
+  mutate(diff = (round(predictions) - actuals)) %>%
+  mutate(abs.diff = abs(round(predictions) - actuals))
+
+preds.v.actuals.2012.june
 
 ```
 
@@ -344,6 +403,8 @@ rmse.2012.june
 ```
 
 
+
+
 ```{r}
 
 predictions = round(forecast.2012.june$f)
@@ -359,6 +420,57 @@ preds.v.actuals.2012.june <- preds.v.actuals.2012.june %>%
 preds.v.actuals.2012.june
 
 ```
+
+
+```{r}
+# series is the array of the series
+
+# horizon is how far you want to predict into the future
+
+# d is the order of the differencing: (1-B^)^d
+
+# s is the order of the seasonality: (1-B^s)
+
+# phis = order of the stationary AR term
+
+# thetas = order of the invertible MA term
+
+# It simply takes the given horizon and the model in the form of s,d,phis and
+# thetas and figures out how many windows it can create in the data (series) and then calculates the ASE for each window.
+
+#The output is the average off all the ASEs from each individual window.
+
+roll.win.ase.wge = function(series, horizon = 1, s = 0, d = 0, phis = 0, thetas = 0)
+{
+trainingSize = length(phis) + length(thetas) + s + d + 1
+numwindows = length(series)-(trainingSize + horizon) + 1
+ASEHolder = numeric(numwindows)
+print(paste("Please Hold For a Moment, TSWGE is processing the Rolling Window ASE with", numwindows, "windows."))
+for( i in 1:numwindows)
+{
+invisible(capture.output(forecasts <- fore.aruma.wge(series[i:(i+(trainingSize-1))],phi = phis, theta = thetas, s = s, d = d,n.ahead = horizon)))
+ASE = mean((series[(trainingSize+i):(trainingSize+ i + (horizon) - 1)] - forecasts$f)^2)
+ASEHolder[i] = ASE
+}
+ASEHolder
+hist(ASEHolder, main = "ASEs for Individual Windows")
+WindowedASE = mean(ASEHolder)
+print("The Summary Statistics for the Rolling Window ASE Are:")
+print(summary(ASEHolder))
+print(paste("The Rolling Window ASE is: ",round(WindowedASE,3)))
+return(list(rwASE = WindowedASE, numwindows = numwindows, horizon = horizon, s = s, d = d, phis = phis, thetas = thetas))
+}
+
+
+```
+
+
+```{r}
+
+roll.win.ase.wge(train.2012.june$count, horizon = 24*7, est.2012.june$phi, est.2012.june$theta, s = 0, d = 0)
+
+```
+
 
 
 
