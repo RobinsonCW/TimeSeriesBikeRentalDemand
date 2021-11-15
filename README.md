@@ -8,7 +8,7 @@ Time Series Analysis of Bike Share Rentals
 
 ## Zoom Video
 
-* [Bike Share Rental Forecasting (video)](https://www.kaggle.com/c/bike-sharing-demand/overview): An video recording of the power point presentation.
+* [Bike Share Rental Forecasting (EDA video)](https://www.youtube.com/watch?v=eX-eew_r7gw): An video recording of the EDA power point presentation.
 
 ## Analysis Files
 
