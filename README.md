@@ -12,12 +12,12 @@ Time Series Analysis of Bike Share Rentals
 
 ## Analysis Files
 
-* [House Property Sales (html)](https://www.kaggle.com/c/bike-sharing-demand/overview): A paper covering the analysis. 
-* [House Property Sales (Rmd)](https://www.kaggle.com/c/bike-sharing-demand/overview): An R-markdown file with the analysis.
+* [Bike Share Rentals (html)](https://www.kaggle.com/c/bike-sharing-demand/overview): A paper covering the analysis. 
+* [Bike Share Rentals (Rmd)](https://www.kaggle.com/c/bike-sharing-demand/overview): An R-markdown file with the analysis.
 
 ## Presentations
 
-* [Bike Share Rentals EDA Presentation (Power Point)](https://www.kaggle.com/c/bike-sharing-demand/overview): A power point presentation covering the questions of interest from our exploratory data analysis.
+* [Bike Share Rentals EDA Presentation (Power Point)](https://github.com/RobinsonCW/TimeSeriesBikeRentalDemand/blob/main/presentations/Chance_and_Kebur_DS6373_TS_Proj1_EDA_Presentation_Final_Draft.pptx): A power point presentation covering the questions of interest from our exploratory data analysis.
 * [Bike Share Rentals Final Presentation (Power Point)](https://www.kaggle.com/c/bike-sharing-demand/overview): A power point presentation covering the questions of interest from our exploratory data analysis as well as the conclusion with additional insights.
 
 ## Data
