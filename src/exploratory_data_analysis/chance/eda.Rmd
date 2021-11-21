@@ -26,6 +26,10 @@ library(ggcorrplot)
 library(tidyverse)
 library(kableExtra)
 library(knitr)
+library(Hmisc)
+
+# Neural Networks
+library(nnfor)
 
 ```
 
@@ -88,6 +92,24 @@ test.c1 <- test.c1 %>%
   11. __registered__ |    Integer 		      | count of registered users 
   12. __count__      |    Integer 		      | count of total users (*primary response variable*)
   
+
+
+
+```{r}
+train.c1 %>%
+  # mutate(price.mean = median(price)) +
+  ggplot(aes(count)) +
+  geom_histogram(bins = 150, alpha = 0.65) +
+  ggtitle("Histogram of Hourly Bike Count") +
+  labs(x = "Hourly Bike Count", y = "Totals per Bin") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r}
+
+summary(train.c1$count)
+
+```
 
 
 
@@ -247,11 +269,43 @@ ggcorrplot(corr, method = "circle")
 
 ```{r}
 train.c1 %>%
-  ggplot(aes(x = registered, y = count)) + 
+  ggplot(aes(x = temp, y = count)) + 
   geom_point(alpha = 0.3) + 
-  geom_smooth(method = 'lm') + 
-  ggtitle("Line Chart of Counts by Registered Users") +
-  labs(x = "Registered", y = "Count")
+  geom_smooth() + 
+  ggtitle("Line Chart of Counts by Tempurature") +
+  labs(x = "Tempurature", y = "Count")
+  
+```
+
+```{r}
+train.c1 %>%
+  ggplot(aes(x = atemp, y = count)) + 
+  geom_point(alpha = 0.3) + 
+  geom_smooth() + 
+  ggtitle("Line Chart of Counts by 'Feels Like' Tempurature") +
+  labs(x = "'Feels Like' Tempurature", y = "Count")
+  
+```
+
+```{r}
+
+train.c1 %>%
+  ggplot(aes(x = temp, y = count)) + 
+  geom_point(alpha = 0.3) + 
+  geom_smooth() + 
+  ggtitle("Line Chart of Counts by Wind Speed") +
+  labs(x = "Wind Speed", y = "Count")
+  
+```
+
+```{r}
+
+train.c1 %>%
+  ggplot(aes(x = humidity, y = count)) + 
+  geom_point(alpha = 0.3) + 
+  geom_smooth() + 
+  ggtitle("Line Chart of Counts by Humidity") +
+  labs(x = "Humidity", y = "Count")
   
 ```
 
@@ -269,8 +323,9 @@ train.2012.june <-  train.c1 %>%
 
 ggplot(data=train.2012.june, aes(x = datetime, y = count)) +
       geom_line() + 
-      ggtitle("Hourly Rental Trends for June 2012") +
-      labs(x = "Time", y = "Count")
+      ggtitle("Hourly Rental Trends for June 1st - June 19th, 2012") +
+      labs(x = "Day", y = "Count") + 
+      scale_x_datetime(date_breaks = "1 day", date_labels = "%d")
 
 ```
 
@@ -352,34 +407,62 @@ plotts.wge(est.2012.june$res)
 
 # 7 day forecast
 
+df <- train.2012.june
+
 no_ahead = 24 * 7
 
-len_of_obs = length(train.2012.june$datetime)
+len_of_obs = length(df$datetime)
 
-forecast.2012.june = fore.aruma.wge(train.2012.june$count, phi = est.2012.june$phi, theta = est.2012.june$theta, n.ahead = no_ahead, lastn = TRUE, limits = FALSE)
+forecast.2012.june = fore.aruma.wge(df$count, phi = est.2012.june$phi, theta = est.2012.june$theta, n.ahead = no_ahead, lastn = TRUE, limits = FALSE, plot = FALSE)
 
-ase.2012.june = mean((train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs] - forecast.2012.june$f)^2)
-ase.2012.june
+# plot(df$count[1:len_of_obs], type = "l", xlab = "Time", ylab = "Count", main = "7 Day Forecast (ARMA)")
+# lines(seq(289,456), forecast.2012.june$f, col = "red")
 
-rmse.2012.june = RMSE(y_true = train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs], y_pred = forecast.2012.june$f)
-rmse.2012.june
+ase.arma.forecasts.seven.days = mean((df$count[(len_of_obs - no_ahead + 1): len_of_obs] - forecast.2012.june$f)^2)
+ase.arma.forecasts.seven.days
+
+rmse.arma.forecasts.seven.days = RMSE(y_true = df$count[(len_of_obs - no_ahead + 1): len_of_obs], y_pred = forecast.2012.june$f)
+rmse.arma.forecasts.seven.days
 
 
 ```
 
 ```{r}
 
-predictions = round(forecast.2012.june$f)
-actuals = train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs]
 
-preds.v.actuals.2012.june <- data.frame(predictions, actuals)    # Apply data.frame function
+forecasts.arma.25.1.seven.days = round(forecast.2012.june$f)
 
+# set point forecast to 0 when less than 0
+forecasts.arma.25.1.seven.days[forecasts.arma.25.1.seven.days < 0] <- 0
 
-preds.v.actuals.2012.june <- preds.v.actuals.2012.june %>%
-  mutate(diff = (round(predictions) - actuals)) %>%
-  mutate(abs.diff = abs(round(predictions) - actuals))
+# predictions = round(forecast.2012.june$f)
+# actuals = train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs]
+# 
+# preds.v.actuals.2012.june <- data.frame(predictions, actuals)    # Apply data.frame function
+# 
+# 
+# preds.v.actuals.2012.june <- preds.v.actuals.2012.june %>%
+#   mutate(diff = (round(predictions) - actuals)) %>%
+#   mutate(abs.diff = abs(round(predictions) - actuals))
+# 
+# preds.v.actuals.2012.june
 
-preds.v.actuals.2012.june
+```
+
+```{r}
+
+df2 <- data.frame(real = df$count,
+          pred = c(rep(NA,length(df$datetime)-length(data.frame(forecasts.arma.25.1.seven.days)[,1])),data.frame(forecasts.arma.25.1.seven.days)[,1]),
+          time = df$datetime)
+
+plot.arma.seven.days <- ggplot(df2, aes(time, real, group = 1 )) +
+  geom_line() + 
+  geom_line(aes(time, pred, group = 1), color = "red")+
+  ggtitle("7 Day Forecast (ARMA)") +
+  labs(x = "Day", y = "Count") + 
+  scale_x_datetime(date_breaks = "1 day", date_labels = "%d")
+
+plot.arma.seven.days
 
 ```
 
@@ -387,42 +470,100 @@ preds.v.actuals.2012.june
 
 # 1 day forecast
 
+df <- train.2012.june
+
 no_ahead = 24
 
-len_of_obs = length(train.2012.june$datetime)
+len_of_obs = length(df$datetime)
 
-forecast.2012.june = fore.aruma.wge(train.2012.june$count, phi = est.2012.june$phi, theta = est.2012.june$theta, n.ahead = no_ahead, lastn = TRUE, limits = FALSE)
+forecast.2012.june = fore.aruma.wge(df$count, phi = est.2012.june$phi, theta = est.2012.june$theta, n.ahead = no_ahead, lastn = TRUE, limits = FALSE, plot = FALSE)
 
-ase.2012.june = mean((train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs] - forecast.2012.june$f)^2)
-ase.2012.june
+# plot(df$count[1:len_of_obs], type = "l", xlab = "Time", ylab = "Count", main = "1 Day Forecast (ARMA)")
+# lines(seq(433,456), forecast.2012.june$f, col = "red")
 
-rmse.2012.june = RMSE(y_true = train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs], y_pred = forecast.2012.june$f)
-rmse.2012.june
+ase.arma.forecasts.one.day = mean((df$count[(len_of_obs - no_ahead + 1): len_of_obs] - forecast.2012.june$f)^2)
+ase.arma.forecasts.one.day
 
+rmse.arma.forecasts.one.day = RMSE(y_true = train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs], y_pred = forecast.2012.june$f)
+rmse.arma.forecasts.one.day
+
+
+```
+
+```{r}
+
+forecasts.arma.25.1.one.day = round(forecast.2012.june$f)
+
+forecasts.arma.25.1.one.day[forecasts.arma.25.1.one.day < 0] <- 0
+
+# predictions = round(forecast.2012.june$f)
+# actuals = train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs]
+# 
+# preds.v.actuals.2012.june <- data.frame(predictions, actuals)    # Apply data.frame function
+# 
+# 
+# preds.v.actuals.2012.june <- preds.v.actuals.2012.june %>%
+#   mutate(diff = (round(predictions) - actuals)) %>%
+#   mutate(abs.diff = abs(round(predictions) - actuals))
+# 
+# preds.v.actuals.2012.june
+
+```
+
+```{r}
+
+df2 <- data.frame(real = df$count,
+          pred = c(rep(NA,length(df$count)-length(data.frame(forecasts.arma.25.1.one.day)[,1])),data.frame(forecasts.arma.25.1.one.day)[,1]),
+          time = df$datetime)
+
+plot.arma.one.day <- ggplot(df2, aes(time, real, group = 1 )) +
+  geom_line() + 
+  geom_line(aes(time, pred, group = 1), color = "red")+
+  ggtitle("1 Day Forecast (ARMA)") +
+  labs(x = "Day", y = "Count") + 
+  scale_x_datetime(date_breaks = "1 day", date_labels = "%d")
+
+
+plot.arma.one.day
 
 ```
 
 
 
 
+
 ```{r}
 
-predictions = round(forecast.2012.june$f)
-actuals = train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs]
+# https://stackoverflow.com/questions/63359877/correlation-matrix-add-additional-column-of-adjusted-p-value
 
-preds.v.actuals.2012.june <- data.frame(predictions, actuals)    # Apply data.frame function
+flattenCorrMatrix <- function(cormat, pmat) {
+               ut <- upper.tri(cormat)
+               data.frame(
+               row = rownames(cormat)[row(cormat)[ut]],
+               column = rownames(cormat)[col(cormat)[ut]],
+               cor  =(cormat)[ut],
+               p = pmat[ut]
+               )
+               }
+```
 
 
-preds.v.actuals.2012.june <- preds.v.actuals.2012.june %>%
-  mutate(diff = (round(predictions) - actuals)) %>%
-  mutate(abs.diff = abs(round(predictions) - actuals))
+```{r}
 
-preds.v.actuals.2012.june
+# library(Hmisc)
+
+train.c1.dropna <- train.c1.numeric %>% drop_na() # %>% dplyr::select(-one_of(c('count')))
+res2 <- rcorr(as.matrix(train.c1.dropna))
+flattenedCor <- flattenCorrMatrix(res2$r, res2$P) %>% arrange(desc(cor))
+flattenedCor <- flattenedCor %>% filter(abs(cor) > 0.1) %>% dplyr::select(-one_of(c('p')))
+names(flattenedCor) <- c('Feature 1','Feature 2','Correlation Coefficient')
+kable(flattenedCor)
 
 ```
 
 
 ```{r}
+
 # series is the array of the series
 
 # horizon is how far you want to predict into the future
@@ -440,25 +581,30 @@ preds.v.actuals.2012.june
 
 #The output is the average off all the ASEs from each individual window.
 
-roll.win.ase.wge = function(series, horizon = 1, s = 0, d = 0, phis = 0, thetas = 0)
-{
-trainingSize = length(phis) + length(thetas) + s + d + 1
-numwindows = length(series)-(trainingSize + horizon) + 1
-ASEHolder = numeric(numwindows)
-print(paste("Please Hold For a Moment, TSWGE is processing the Rolling Window ASE with", numwindows, "windows."))
-for( i in 1:numwindows)
-{
-invisible(capture.output(forecasts <- fore.aruma.wge(series[i:(i+(trainingSize-1))],phi = phis, theta = thetas, s = s, d = d,n.ahead = horizon)))
-ASE = mean((series[(trainingSize+i):(trainingSize+ i + (horizon) - 1)] - forecasts$f)^2)
-ASEHolder[i] = ASE
-}
-ASEHolder
-hist(ASEHolder, main = "ASEs for Individual Windows")
-WindowedASE = mean(ASEHolder)
-print("The Summary Statistics for the Rolling Window ASE Are:")
-print(summary(ASEHolder))
-print(paste("The Rolling Window ASE is: ",round(WindowedASE,3)))
-return(list(rwASE = WindowedASE, numwindows = numwindows, horizon = horizon, s = s, d = d, phis = phis, thetas = thetas))
+roll.win.ase.wge = function(series, horizon = 1, s = 0, d = 0, phis = 0, thetas = 0) {
+  
+  trainingSize = length(phis) + length(thetas) + s + d + 1
+  
+  numwindows = length(series)-(trainingSize + horizon) + 1
+  
+  ASEHolder = numeric(numwindows)
+  
+  print(paste("Please Hold For a Moment, TSWGE is processing the Rolling Window ASE with", numwindows, "windows."))
+  
+  for( i in 1:numwindows) {
+    invisible(capture.output(forecasts <- fore.aruma.wge(series[i:(i+(trainingSize-1))],phi = phis, theta = thetas, s = s, d = d,n.ahead = horizon)))
+    ASE = mean((series[(trainingSize+i):(trainingSize+ i + (horizon) - 1)] - forecasts$f)^2)
+    ASEHolder[i] = ASE
+  }
+  
+  ASEHolder
+  hist(ASEHolder, main = "ASEs for Individual Windows")
+  WindowedASE = mean(ASEHolder)
+  print("The Summary Statistics for the Rolling Window ASE Are:")
+  print(summary(ASEHolder))
+  print(paste("The Rolling Window ASE is: ",round(WindowedASE,3)))
+  
+  return(list(rwASE = WindowedASE, numwindows = numwindows, horizon = horizon, s = s, d = d, phis = phis, thetas = thetas))
 }
 
 
@@ -467,9 +613,399 @@ return(list(rwASE = WindowedASE, numwindows = numwindows, horizon = horizon, s =
 
 ```{r}
 
-roll.win.ase.wge(train.2012.june$count, horizon = 24*7, est.2012.june$phi, est.2012.june$theta, s = 0, d = 0)
+# roll.win.ase.wge(train.2012.june$count, horizon = 24, est.2012.june$phi, est.2012.june$theta, s = 0, d = 0)
 
 ```
+
+
+
+# Vector Auto-Regressive (VAR) Model
+
+```{r}
+ccf(train.2012.june$count, train.2012.june$temp)
+```
+
+```{r}
+
+ccf(train.2012.june$count, train.2012.june$weather)
+
+```
+
+```{r}
+
+ccf(train.2012.june$count, train.2012.june$humidity)
+
+```
+
+```{r}
+
+ccf(train.2012.june$count, train.2012.june$hour)
+
+```
+
+```{r}
+
+# train.2012.june$count <- log(train.2012.june$count)
+
+# train.2012.june$temp <- scale(train.2012.june$temp, center = FALSE, scale = TRUE) 
+# train.2012.june$humidity <- scale(train.2012.june$humidity, center = FALSE, scale = TRUE) 
+# train.2012.june$windspeed <- scale(train.2012.june$windspeed, center = FALSE, scale = TRUE) 
+
+X = cbind(train.2012.june$count, train.2012.june$temp, train.2012.june$humidity, train.2012.june$weather, train.2012.june$hour)
+# X = cbind(train.c1$count, train.c1$temp, train.c1$humidity, train.c1$weather, train.c1$hour)
+
+VARselect(X, lag.max = 24, type = "const", season = NULL, exogen = NULL)
+
+```
+
+
+```{r}
+
+lsfit = VAR(X, p = 22, type = "const", ic = c("AIC"))
+# summary(lsfit)
+
+```
+
+## 7 Day Forecast
+
+```{r}
+
+no_ahead = 24*7
+
+forecasts.var.seven.days = predict(lsfit, n.ahead = no_ahead)
+
+```
+
+
+```{r}
+
+forecasts.1.var.seven.days = forecasts.var.seven.days$fcst$y1[,1]
+
+# set point forecast to 0 when less than 0
+forecasts.1.var.seven.days[forecasts.1.var.seven.days < 0] <- 0
+
+```
+
+```{r}
+
+# no_ahead = 24*7
+
+df <- train.2012.june
+
+len_of_obs = length(df$datetime)
+
+train_stop = len_of_obs - no_ahead
+test_start = train_stop + 1
+
+plot(df$count[1:len_of_obs], type = "l", xlab = "Time", ylab = "Count", main = "7 Day Forecast (VAR)")
+lines(seq(test_start, len_of_obs), forecasts.1.var.seven.days, col = "red")
+
+ase.var.forecasts.seven.days = mean((df$count[test_start:len_of_obs] - forecasts.1.var.seven.days)^2)
+ase.var.forecasts.seven.days
+
+rmse.var.2012.seven.days = RMSE(y_true = df$count[(len_of_obs - no_ahead + 1): len_of_obs], y_pred = forecasts.1.var.seven.days)
+rmse.var.2012.seven.days
+
+```
+
+
+```{r}
+
+df2 <- data.frame(real = df$count,
+          pred = c(rep(NA,length(df$count)-length(data.frame(forecasts.1.var.seven.days)[,1])),data.frame(forecasts.1.var.seven.days)[,1]),
+          time = df$datetime)
+
+plot.arma.one.day <- ggplot(df2, aes(time, real, group = 1 )) +
+  geom_line() + 
+  geom_line(aes(time, pred, group = 1), color = "red")+
+  ggtitle("7 Day Forecast (VAR)") +
+  labs(x = "Day", y = "Count") + 
+  scale_x_datetime(date_breaks = "1 day", date_labels = "%d")
+
+
+plot.arma.one.day
+
+```
+
+
+
+## 1 Day Forecast
+
+```{r}
+
+no_ahead = 24
+
+forecasts.var.one.day = predict(lsfit, n.ahead = no_ahead)
+
+```
+
+
+```{r}
+
+forecasts.1.var.one.day = forecasts.var.one.day$fcst$y1[,1]
+
+# set point forecast to 0 when less than 0
+forecasts.1.var.one.day[forecasts.1.var.one.day < 0] <- 0
+
+```
+
+```{r}
+
+# no_ahead = 24
+
+df <- train.2012.june
+
+len_of_obs = length(df$datetime)
+
+train_stop = len_of_obs - no_ahead
+test_start = train_stop + 1
+
+# plot(df$count[1:len_of_obs], type = "l", xlab = "Time", ylab = "Count", main = "1 Day Forecast (VAR)")
+# lines(seq(test_start, len_of_obs), forecasts.1.var.one.day, col = "red")
+
+ase.var.forecasts.one.day = mean((df$count[test_start:len_of_obs] - forecasts.1.var.one.day)^2)
+ase.var.forecasts.one.day
+
+rmse.var.forecasts.one.day = RMSE(y_true = df$count[(len_of_obs - no_ahead + 1): len_of_obs], y_pred = forecasts.1.var.one.day)
+rmse.var.forecasts.one.day
+
+```
+
+```{r}
+
+df2 <- data.frame(real = df$count,
+          pred = c(rep(NA,length(df$count)-length(data.frame(forecasts.1.var.one.day)[,1])),data.frame(forecasts.1.var.one.day)[,1]),
+          time = df$datetime)
+
+plot.arma.one.day <- ggplot(df2, aes(time, real, group = 1 )) +
+  geom_line() + 
+  geom_line(aes(time, pred, group = 1), color = "red")+
+  ggtitle("1 Day Forecast (VAR)") +
+  labs(x = "Day", y = "Count") + 
+  scale_x_datetime(date_breaks = "1 day", date_labels = "%d")
+
+
+plot.arma.one.day
+
+```
+
+
+# Neural Network Model
+
+## 7 Day Forecast
+
+```{r}
+
+df <- train.2012.june
+
+no_ahead = 24 * 7
+
+len_of_obs = length(df$datetime)
+
+train_stop = len_of_obs - no_ahead
+test_start = train_stop + 1
+
+# df$temp <- scale(df$temp, center = FALSE, scale = TRUE)
+# df$humidity <- scale(df$humidity, center = FALSE, scale = TRUE)
+# df$windspeed <- scale(df$windspeed, center = FALSE, scale = TRUE)
+
+ts.count = ts(df$count[1:train_stop])
+ts.count.x = data.frame(temp = ts(df$temp), humidity = ts(df$humidity),
+                        weather = ts(df$weather), hour = ts(df$hour))
+
+set.seed(42)
+
+fit.mlp.seven.days = mlp(ts.count, hd = 5, xreg = ts.count.x, lags = no_ahead, xreg.lags = c(1,1,1,24), allow.det.season = FALSE)
+plot(fit.mlp.seven.days)
+
+forecasts.mlp.seven.days = forecast(fit.mlp.seven.days, h = no_ahead, xreg = ts.count.x)
+
+# plot(df$count[1:len_of_obs], type = "l", xlab = "Time", ylab = "Count", main = "7 Day Forecast (MLP)")
+# lines(seq(test_start, len_of_obs), forecasts.mlp.seven.days$mean, col = "red")
+
+ase.mlp.forecasts.seven.days = mean((df$count[test_start:len_of_obs] - forecasts.mlp.seven.days$mean)^2)
+ase.mlp.forecasts.seven.days
+
+rmse.mlp.forecasts.seven.days = sqrt(mean((df$count[test_start:len_of_obs] - forecasts.mlp.seven.days$mean)^2))
+rmse.mlp.forecasts.seven.days
+
+
+```
+
+```{r}
+
+df2 <- data.frame(real = df$count,
+          pred = c(rep(NA,length(df$count)-length(data.frame(forecasts.mlp.seven.days)[,1])),data.frame(forecasts.mlp.seven.days)[,1]),
+          time = df$datetime)
+
+plot.arma.one.day <- ggplot(df2, aes(time, real, group = 1 )) +
+  geom_line() + 
+  geom_line(aes(time, pred, group = 1), color = "red")+
+  ggtitle("7 Day Forecast (MLP)") +
+  labs(x = "Day", y = "Count") + 
+  scale_x_datetime(date_breaks = "1 day", date_labels = "%d")
+
+
+plot.arma.one.day
+
+```
+
+
+## 1 Day Forecast
+
+```{r}
+
+df <- train.2012.june
+
+no_ahead = 24
+
+len_of_obs = length(df$datetime)
+
+train_stop = len_of_obs - no_ahead
+test_start = train_stop + 1
+
+# df$temp <- scale(df$temp, center = FALSE, scale = TRUE)
+# df$humidity <- scale(df$humidity, center = FALSE, scale = TRUE)
+# df$windspeed <- scale(df$windspeed, center = FALSE, scale = TRUE)
+
+ts.count = ts(df$count[1:train_stop])
+ts.count.x = data.frame(temp = ts(df$temp), humidity = ts(df$humidity), 
+                        weather = ts(df$weather), hour = ts(df$hour))
+set.seed(42)
+
+# xreg.lags = c(1,1,1,24),
+
+fit.mlp.one.day = mlp(ts.count, hd = 5, xreg = ts.count.x, lags = no_ahead, allow.det.season = FALSE)
+plot(fit.mlp.one.day)
+
+forecasts.mlp.one.day = forecast(fit.mlp.one.day, h = no_ahead, xreg = ts.count.x)
+
+# plot(df$count[1:len_of_obs], type = "l", xlab = "Time", ylab = "Count", main = "1 Day Forecast (MLP)")
+# lines(seq(test_start, len_of_obs), forecasts.mlp.one.day$mean, col = "red")
+
+ase.mlp.forecasts.one.day = mean((df$count[test_start:len_of_obs] - forecasts.mlp.one.day$mean)^2)
+ase.mlp.forecasts.one.day
+
+rmse.mlp.forecasts.one.day = sqrt(mean((df$count[test_start:len_of_obs] - forecasts.mlp.one.day$mean)^2))
+rmse.mlp.forecasts.one.day
+
+```
+
+```{r}
+
+df2 <- data.frame(real = df$count,
+          pred = c(rep(NA,length(df$count)-length(data.frame(forecasts.mlp.one.day)[,1])),data.frame(forecasts.mlp.one.day)[,1]),
+          time = df$datetime)
+
+plot.arma.one.day <- ggplot(df2, aes(time, real, group = 1 )) +
+  geom_line() + 
+  geom_line(aes(time, pred, group = 1), color = "red")+
+  ggtitle("1 Day Forecast (MLP)") +
+  labs(x = "Day", y = "Count") + 
+  scale_x_datetime(date_breaks = "1 day", date_labels = "%d")
+
+
+plot.arma.one.day
+
+```
+
+
+## Ensemble 
+
+### 7 Days
+
+```{r}
+
+forecasts.1.var.seven.days 
+forecasts.mlp.seven.days
+
+df.ensemble.seven.days <- data.frame(train.2012.june$count[289:456], forecasts.arma.25.1.seven.days, list(forecasts.1.var.seven.days), forecasts.mlp.seven.days)
+
+colnames(df.ensemble.seven.days) <- c("Actual", "Predicted (ARMA)", "Predicted (VAR)", "Predicted (MLP)")
+
+df.ensemble.seven.days <- df.ensemble.seven.days %>%
+  mutate("Predicted (VAR)" = round(df.ensemble.seven.days$`Predicted (VAR)`)) %>%
+  mutate("Predicted (MLP)" = round(df.ensemble.seven.days$`Predicted (MLP)`)) %>%
+  mutate("Predicted (Ensemble)" = round((df.ensemble.seven.days$`Predicted (MLP)` + df.ensemble.seven.days$`Predicted (VAR)`)/2))
+
+df.ensemble.seven.days
+
+```
+
+```{r}
+
+mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (ARMA)`)^2)
+
+mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (VAR)`)^2)
+
+mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (MLP)`)^2)
+
+mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (Ensemble)`)^2)
+
+```
+
+```{r}
+
+sqrt(mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (ARMA)`)^2))
+
+sqrt(mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (VAR)`)^2))
+
+sqrt(mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (MLP)`)^2))
+
+sqrt(mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (Ensemble)`)^2))
+
+```
+
+# 1 Day
+
+```{r}
+
+forecasts.1.var.one.day # = data.frame(forecasts.1.var.seven.days)
+forecasts.mlp.one.day
+
+df.ensemble.one.day <- data.frame(train.2012.june$count[433:456], forecasts.arma.25.1.one.day, list(forecasts.1.var.one.day), forecasts.mlp.one.day)
+
+colnames(df.ensemble.one.day) <- c("Actual", "Predicted (ARMA)", "Predicted (VAR)", "Predicted (MLP)")
+
+df.ensemble.one.day <- df.ensemble.one.day %>%
+  mutate("Predicted (VAR)" = round(df.ensemble.one.day$`Predicted (VAR)`)) %>%
+  mutate("Predicted (MLP)" = round(df.ensemble.one.day$`Predicted (MLP)`)) %>%
+  mutate("Predicted (Ensemble)" = round((df.ensemble.one.day$`Predicted (MLP)` + df.ensemble.one.day$`Predicted (VAR)`)/2))
+
+df.ensemble.one.day
+
+```
+### ASE 
+
+```{r}
+
+
+mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (ARMA)`)^2)
+
+mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (VAR)`)^2)
+
+mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (MLP)`)^2)
+
+mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (Ensemble)`)^2)
+
+```
+
+
+## RMSE
+
+```{r}
+
+
+sqrt(mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (ARMA)`)^2))
+
+sqrt(mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (VAR)`)^2))
+
+sqrt(mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (MLP)`)^2))
+
+sqrt(mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (Ensemble)`)^2))
+
+```
+
 
 
 
