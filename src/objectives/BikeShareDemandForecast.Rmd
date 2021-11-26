@@ -51,7 +51,7 @@ library(tidyverse)
 library(kableExtra)
 library(knitr)
 library(Hmisc)
-# library(gridExtra)
+library(gridExtra)
 
 # Neural Networks
 library(nnfor)
@@ -113,6 +113,11 @@ Bike rentals where the customer can pick up and drop off a bike at their leisure
 # Data Analysis
 
 
+The data collected for this project consists of hourly bike share rentals from January 1st, 2011 through December 31st, 2012.
+
+There are 12 columns provided in the `train.csv` data set with 10,886 observations.  The `test.csv` data set has 6,493 records, or roughly 37% of the overall combined samples from the two files.  This is due to the fact that the training data consist of the first 19 days of each month and the test the remaining 11~12 days.  The test set does not include the response variables for casual, registered or total users.
+
+
   Column Name        |Type                  |Description
   -------------------|--------------------- |------------------------------------------------
   1.  datetime       |    Character         | YYYY-MM-DD HH24 (example:  2011-01-01 04:00:00)
@@ -131,6 +136,7 @@ Bike rentals where the customer can pick up and drop off a bike at their leisure
 
 \pagebreak
 
+
 ```{r histogram-hourly-bike-count-full, message=FALSE, echo=FALSE}
 
 train.c1 %>%
@@ -144,20 +150,26 @@ train.c1 %>%
 
 ```
 
+The response variable of `count` appears to be heavily right-skewed, with the median value at ~145 users.  Additional summary statistics are show below.
+
+
 ```{r summary-count-full, message=FALSE, echo=FALSE}
 
-knitr::kable(as.array(summary(train.c1$count)))
+knitr::kable(data.frame(as.array(summary(train.c1$count), "latex", booktabs = T))) %>%
+  kable_styling(position = "center")
+
 
 ```
 
 \pagebreak
+
 
 ```{r barplot-average-hourly-bike-count-by-month-full, message=FALSE, echo=FALSE}
 
 train.c1 %>%
   remove_missing(na.rm = TRUE) %>%
   group_by(month) %>%
-  ggplot(aes(x = month, y = count, fill=month)) +
+  ggplot(aes(x = month, y = count)) +
   geom_bar(position = "dodge", stat = "summary", fun = "mean") +
   ggtitle("Bar Plot of Average Hourly Bike Rentals by Month") +
   labs(x = "Month", y = "Average") + 
@@ -166,31 +178,37 @@ train.c1 %>%
 
 ```
 
-
+June appears to be the month with heaviest demand.  
 
 ```{r boxplot-average-hourly-bike-count-by-month-full, message=FALSE, echo=FALSE}
 
+
 train.c1 %>%
-  ggplot(aes(x=month, y=count, fill=month)) + 
+  ggplot(aes(x=month, y=count)) + 
   geom_boxplot() + 
   ggtitle("Box Plot of Bike Rentals by Month") +
   labs(x = "Month", y = "Average") + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 
+# grid.arrange(ggplotGrob(plot1), ggplotGrob(plot2), ncol = 1, nrow = 2)
+# grid.arrange(arrangeGrob(plot1, plot2), ncol = 1, nrow = 2)
+
 ```
 
-
+It also appears to show relatively few outliers compared to months like January.
 
 
 \pagebreak
+
+
 
 ```{r barplot-average-hourly-bike-count-by-season-full, message=FALSE, echo=FALSE}
 
 train.c1 %>%
   remove_missing(na.rm = TRUE) %>%
   group_by(season) %>%
-  ggplot(aes(x = season, y = count, fill=season)) +
+  ggplot(aes(x = season, y = count)) +
   geom_bar(position = "dodge", stat = "summary", fun = "mean") +
   ggtitle("Bar Plot of Average Hourly Bike Rentals by Season") +
   labs(x = "Season", y = "Average") + 
@@ -198,17 +216,21 @@ train.c1 %>%
 
 ```
 
+Fall appears to have more rentals on average than the other seasons.
+
 ```{r boxplot-average-hourly-bike-count-by-season-full, message=FALSE, echo=FALSE}
+
 train.c1 %>%
-  ggplot(aes(x=season, y=count, fill=season)) + 
+  ggplot(aes(x=season, y=count)) + 
   geom_boxplot() + 
   ggtitle("Box Plot of Bike Rentals by Season") +
   labs(x = "Season", y = "Average") + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
 ```
 
-
 \pagebreak
+
 
 ```{r barplot-average-hourly-bike-count-by-hour-full, message=FALSE, echo=FALSE}
 
@@ -223,7 +245,7 @@ train.c1 %>%
 
 ```
 
-
+The 5pm hour clearly has the highest peak compared to the other hours of the day.
 
 ```{r boxplot-average-hourly-bike-count-by-hour-full, message=FALSE, echo=FALSE}
 train.c1 %>%
@@ -236,12 +258,14 @@ train.c1 %>%
 
 \pagebreak
 
+
+
 ```{r barplot-average-hourly-bike-count-by-weather-full, message=FALSE, echo=FALSE}
 
 train.c1 %>%
   remove_missing(na.rm = TRUE) %>%
   group_by(weather) %>%
-  ggplot(aes(x = weather, y = count, fill=weather)) +
+  ggplot(aes(x = weather, y = count)) +
   geom_bar(position = "dodge", stat = "summary", fun = "mean") +
   ggtitle("Bar Plot of Average Hourly Bike Rentals by Weather") +
   labs(x = "Weather", y = "Average") + 
@@ -249,10 +273,14 @@ train.c1 %>%
 
 ```
 
+As expected, more riders are out when the weather is great, or better than average.
+
+
+
 ```{r boxplot-average-hourly-bike-count-by-weather-full, message=FALSE, echo=FALSE}
 
 train.c1 %>%
-  ggplot(aes(x=weather, y=count, fill=weather)) + 
+  ggplot(aes(x=weather, y=count)) + 
   geom_boxplot() + 
   ggtitle("Box Plot of Bike Rentals by Weather") +
   labs(x = "Weather", y = "Average") + 
@@ -260,8 +288,11 @@ train.c1 %>%
 
 ```
 
+Note the small spread of riders when the weather was listed as poor, even though the averages were consistent with other categories.
 
 \pagebreak
+
+
 
 ```{r barplot-average-hourly-bike-count-by-workingday-full, message=FALSE, echo=FALSE}
 
@@ -276,6 +307,7 @@ train.c1 %>%
 
 ```
 
+Surprisingly, whether or not the day was on a working day or not had little affect on the mean or median.
 
 ```{r boxplot-average-hourly-bike-count-by-workingday-full, message=FALSE, echo=FALSE}
 
@@ -291,6 +323,8 @@ train.c1 %>%
 
 \pagebreak
 
+
+
 ```{r barplot-average-hourly-bike-count-by-holiday-full, message=FALSE, echo=FALSE} 
 
 train.c1 %>%
@@ -303,6 +337,9 @@ train.c1 %>%
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 ```
+
+
+The same was true for the day falling on a holiday, it appeared to have little affect on the counts.
 
 ```{r boxplot-average-hourly-bike-count-by-holiday-full, message=FALSE, echo=FALSE}
 
@@ -318,7 +355,9 @@ train.c1 %>%
 
 \pagebreak
 
-```{r correlation-plot-full, message=FALSE, echo=FALSE}
+
+
+```{r correlation-plot-full, message=FALSE, echo=FALSE, warning=FALSE}
 
 train.c1.numeric <- train.c1 %>%
   select_if(is.numeric)
@@ -327,6 +366,43 @@ corr <- round(cor(train.c1.numeric), 1)
   
 ggcorrplot(corr, method = "circle")
 
+
+```
+
+
+
+```{r flatten-corr-matrix-function-definition, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+
+# https://stackoverflow.com/questions/63359877/correlation-matrix-add-additional-column-of-adjusted-p-value
+
+flattenCorrMatrix <- function(cormat, pmat) {
+               ut <- upper.tri(cormat)
+               data.frame(
+               row = rownames(cormat)[row(cormat)[ut]],
+               column = rownames(cormat)[col(cormat)[ut]],
+               cor  =(cormat)[ut],
+               p = pmat[ut]
+               )
+               }
+```
+
+
+The plot below shows a strong correlation between casual, registered and total (count) users.  We will use count as the primary response variable for our modeling, and discard the other response variables.
+
+Note that temp and atemp are also closely related to one another as would be expected.
+
+
+```{r flatten-corr-matrix-output, message=FALSE, echo=FALSE}
+
+# library(Hmisc)
+
+train.c1.dropna <- train.c1.numeric %>% drop_na() # %>% dplyr::select(-one_of(c('count')))
+res2 <- rcorr(as.matrix(train.c1.dropna))
+flattenedCor <- flattenCorrMatrix(res2$r, res2$P) %>% arrange(desc(cor))
+flattenedCor <- flattenedCor %>% filter(abs(cor) > 0.1) %>% dplyr::select(-one_of(c('p')))
+names(flattenedCor) <- c('Feature 1','Feature 2','Correlation Coefficient')
+knitr::kable(flattenedCor, "latex", booktabs = T) %>%
+  kable_styling(position = "center")
 
 ```
 
@@ -519,7 +595,7 @@ rmse.arma.forecasts.seven.days
 forecasts.arma.25.1.seven.days = round(forecast.2012.june$f)
 
 # set point forecast to 0 when less than 0
-forecasts.arma.25.1.seven.days[forecasts.arma.25.1.seven.days < 0] <- 0
+forecasts.arma.25.1.seven.days[forecasts.arma.25.1.seven.days < 0] <- 1
 
 # predictions = round(forecast.2012.june$f)
 # actuals = train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs]
@@ -536,7 +612,7 @@ forecasts.arma.25.1.seven.days[forecasts.arma.25.1.seven.days < 0] <- 0
 ```
 
 
-```{r arma-forecasts-seven-days-three, message=FALSE, echo=FALSE}
+```{r arma-forecasts-seven-days-three, message=FALSE, echo=FALSE, warning=FALSE}
 
 df2 <- data.frame(real = df$count,
           pred = c(rep(NA,length(df$datetime)-length(data.frame(forecasts.arma.25.1.seven.days)[,1])),data.frame(forecasts.arma.25.1.seven.days)[,1]),
@@ -581,7 +657,7 @@ rmse.arma.forecasts.one.day
 
 forecasts.arma.25.1.one.day = round(forecast.2012.june$f)
 
-forecasts.arma.25.1.one.day[forecasts.arma.25.1.one.day < 0] <- 0
+forecasts.arma.25.1.one.day[forecasts.arma.25.1.one.day < 0] <- 1
 
 # predictions = round(forecast.2012.june$f)
 # actuals = train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs]
@@ -599,7 +675,7 @@ forecasts.arma.25.1.one.day[forecasts.arma.25.1.one.day < 0] <- 0
 
 \pagebreak
 
-```{r arma-forecasts-one-day-three, message=FALSE, echo=FALSE}
+```{r arma-forecasts-one-day-three, message=FALSE, echo=FALSE, warning=FALSE}
 
 df2 <- data.frame(real = df$count,
           pred = c(rep(NA,length(df$count)-length(data.frame(forecasts.arma.25.1.one.day)[,1])),data.frame(forecasts.arma.25.1.one.day)[,1]),
@@ -614,39 +690,6 @@ plot.arma.one.day <- ggplot(df2, aes(time, real, group = 1 )) +
 
 
 plot.arma.one.day
-
-```
-
-
-
-
-
-```{r flatten-corr-matrix-function-definition, results='hide', message=FALSE, include=FALSE, echo=FALSE}
-
-# https://stackoverflow.com/questions/63359877/correlation-matrix-add-additional-column-of-adjusted-p-value
-
-flattenCorrMatrix <- function(cormat, pmat) {
-               ut <- upper.tri(cormat)
-               data.frame(
-               row = rownames(cormat)[row(cormat)[ut]],
-               column = rownames(cormat)[col(cormat)[ut]],
-               cor  =(cormat)[ut],
-               p = pmat[ut]
-               )
-               }
-```
-
-
-```{r flatten-corr-matrix-output, message=FALSE, echo=FALSE}
-
-# library(Hmisc)
-
-train.c1.dropna <- train.c1.numeric %>% drop_na() # %>% dplyr::select(-one_of(c('count')))
-res2 <- rcorr(as.matrix(train.c1.dropna))
-flattenedCor <- flattenCorrMatrix(res2$r, res2$P) %>% arrange(desc(cor))
-flattenedCor <- flattenedCor %>% filter(abs(cor) > 0.1) %>% dplyr::select(-one_of(c('p')))
-names(flattenedCor) <- c('Feature 1','Feature 2','Correlation Coefficient')
-kable(flattenedCor)
 
 ```
 
@@ -712,39 +755,59 @@ roll.win.ase.wge = function(series, horizon = 1, s = 0, d = 0, phis = 0, thetas 
 
 ## Vector Auto-Regressive (VAR) Model
 
+### Cross-Correlation
+
+
+**Temperature**
 
 ```{r var-ccf-count-temp, message=FALSE, echo=FALSE}
 
-ccf(train.2012.june$count, train.2012.june$temp)
+ccf(train.2012.june$temp, train.2012.june$count)
+
+
+# lag 0 = 0.473
 
 ```
 
 
 \pagebreak
 
-```{r var-ccf-count-weather, message=FALSE, echo=FALSE}
-
-ccf(train.2012.june$count, train.2012.june$weather)
-
-```
-
-
-\pagebreak
+**Humidity**
 
 ```{r var-ccf-count-humidity, message=FALSE, echo=FALSE}
 
-ccf(train.2012.june$count, train.2012.june$humidity)
+ccf(train.2012.june$humidity, train.2012.june$count, lag.max = 25)
+
+# lag 0 = -0.535
 
 ```
 
 
 \pagebreak
 
-```{r var-ccf-count-hour, message=FALSE, echo=FALSE}
+**Weather**
 
-ccf(train.2012.june$count, train.2012.june$hour)
+```{r var-ccf-count-weather, message=FALSE, echo=FALSE}
+
+ccf(train.2012.june$weather, train.2012.june$count, lag.max = 25)
+
+# lag 0 = -0.212
 
 ```
+
+
+\pagebreak
+
+**Hour**
+
+```{r var-ccf-count-hour, message=FALSE, echo=FALSE}
+
+ccf(train.2012.june$hour, train.2012.june$count, lag.max = 25)
+
+# lag 21 = 0.642
+
+```
+
 
 ```{r var-xbind, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 
@@ -788,7 +851,7 @@ forecasts.var.seven.days = predict(lsfit, n.ahead = no_ahead)
 forecasts.1.var.seven.days = forecasts.var.seven.days$fcst$y1[,1]
 
 # set point forecast to 0 when less than 0
-forecasts.1.var.seven.days[forecasts.1.var.seven.days < 0] <- 0
+forecasts.1.var.seven.days[forecasts.1.var.seven.days < 0] <- 1
 
 ```
 
@@ -815,7 +878,7 @@ rmse.var.2012.seven.days
 ```
 
 
-```{r var-seven-days-forecast-plot, message=FALSE, echo=FALSE}
+```{r var-seven-days-forecast-plot, message=FALSE, echo=FALSE, warning=FALSE}
 
 df2 <- data.frame(real = df$count,
           pred = c(rep(NA,length(df$count)-length(data.frame(forecasts.1.var.seven.days)[,1])),data.frame(forecasts.1.var.seven.days)[,1]),
@@ -853,7 +916,7 @@ forecasts.var.one.day = predict(lsfit, n.ahead = no_ahead)
 forecasts.1.var.one.day = forecasts.var.one.day$fcst$y1[,1]
 
 # set point forecast to 0 when less than 0
-forecasts.1.var.one.day[forecasts.1.var.one.day < 0] <- 0
+forecasts.1.var.one.day[forecasts.1.var.one.day < 0] <- 1
 
 ```
 
@@ -879,7 +942,7 @@ rmse.var.forecasts.one.day
 
 ```
 
-```{r var-one-day-forecast-plot, message=FALSE, echo=FALSE}
+```{r var-one-day-forecast-plot, message=FALSE, echo=FALSE, warning=FALSE}
 
 df2 <- data.frame(real = df$count,
           pred = c(rep(NA,length(df$count)-length(data.frame(forecasts.1.var.one.day)[,1])),data.frame(forecasts.1.var.one.day)[,1]),
@@ -941,7 +1004,7 @@ rmse.mlp.forecasts.seven.days
 
 ```
 
-```{r mlp-seven-day-forecast-plot, message=FALSE, echo=FALSE}
+```{r mlp-seven-day-forecast-plot, message=FALSE, echo=FALSE, warning=FALSE}
 
 df2 <- data.frame(real = df$count,
           pred = c(rep(NA,length(df$count)-length(data.frame(forecasts.mlp.seven.days)[,1])),data.frame(forecasts.mlp.seven.days)[,1]),
@@ -984,8 +1047,7 @@ ts.count.x = data.frame(temp = ts(df$temp), humidity = ts(df$humidity),
                         weather = ts(df$weather), hour = ts(df$hour))
 set.seed(42)
 
-# xreg.lags = c(1,1,1,24),
-
+# xreg.lags = c(1,1,1,24),   << For some reason, the code will not run with these in
 fit.mlp.one.day = mlp(ts.count, hd = 5, xreg = ts.count.x, lags = no_ahead, allow.det.season = FALSE)
 plot(fit.mlp.one.day)
 
@@ -1002,7 +1064,7 @@ rmse.mlp.forecasts.one.day
 
 ```
 
-```{r mlp-one-day-forecast-plot, message=FALSE, echo=FALSE}
+```{r mlp-one-day-forecast-plot, message=FALSE, echo=FALSE, warning=FALSE}
 
 df2 <- data.frame(real = df$count,
           pred = c(rep(NA,length(df$count)-length(data.frame(forecasts.mlp.one.day)[,1])),data.frame(forecasts.mlp.one.day)[,1]),
@@ -1087,71 +1149,89 @@ knitr::kable(head(df.ensemble.one.day))
 
 ### ASE
 
-[Make a Table]
 
-```{r ensemble-seven-day-forecast-ase, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+```{r ensemble-seven-day-forecast-ase, message=FALSE, echo=FALSE}
 
-mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (ARMA)`)^2)
+ase.arma.forecasts.seven.days.rounded <- mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (ARMA)`)^2)
 
-mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (VAR)`)^2)
+ase.var.forecasts.seven.days.rounded <- mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (VAR)`)^2)
 
-mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (MLP)`)^2)
+ase.mlp.forecasts.seven.days.rounded <- mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (MLP)`)^2)
 
-mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (Ensemble)`)^2)
+ase.ensemble.forecasts.seven.days.rounded <- mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (Ensemble)`)^2)
+
+kable(data.frame('Model' = c('ARMA', 'VAR', 'MLP', 'Ensemble'), 
+                 'ASE'= c(ase.arma.forecasts.seven.days.rounded, ase.var.forecasts.seven.days.rounded, ase.mlp.forecasts.seven.days.rounded, ase.ensemble.forecasts.seven.days.rounded)),
+      "latex", booktabs = T)
 
 ```
 
 ### RMSE
 
-[Make a table]
 
-```{r ensemble-seven-day-forecast-rmse, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+```{r ensemble-seven-day-forecast-rmse, message=FALSE, echo=FALSE}
 
-sqrt(mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (ARMA)`)^2))
+rmse.arma.forecasts.seven.days.rounded <- sqrt(mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (ARMA)`)^2))
 
-sqrt(mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (VAR)`)^2))
+rmse.var.forecasts.seven.days.rounded <- sqrt(mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (VAR)`)^2))
 
-sqrt(mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (MLP)`)^2))
+rmse.mlp.forecasts.seven.days.rounded <- sqrt(mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (MLP)`)^2))
 
-sqrt(mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (Ensemble)`)^2))
+rmse.ensemble.forecasts.seven.days.rounded <- sqrt(mean((df.ensemble.seven.days$`Actual` - df.ensemble.seven.days$`Predicted (Ensemble)`)^2))
+
+
+kable(data.frame('Model' = c('ARMA', 'VAR', 'MLP', 'Ensemble'), 
+                 'RMSE'= c(rmse.arma.forecasts.seven.days.rounded, rmse.var.forecasts.seven.days.rounded, rmse.mlp.forecasts.seven.days.rounded, rmse.ensemble.forecasts.seven.days.rounded)),
+      "latex", booktabs = T)
 
 ```
 
+\pagebreak
 
 ## 1 Day Forecast
 
 ### ASE
 
-[Make a Table]
 
-```{r ensemble-one-day-forecast-ase, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+```{r ensemble-one-day-forecast-ase, message=FALSE, echo=FALSE}
 
 
-mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (ARMA)`)^2)
+ase.arma.forecasts.one.day.rounded <- mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (ARMA)`)^2)
 
-mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (VAR)`)^2)
+ase.var.forecasts.one.day.rounded <- mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (VAR)`)^2)
 
-mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (MLP)`)^2)
+ase.mlp.forecasts.one.day.rounded <- mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (MLP)`)^2)
 
-mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (Ensemble)`)^2)
+ase.ensemble.forecasts.one.day.rounded <- mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (Ensemble)`)^2)
+
+kable(data.frame('Model' = c('ARMA', 'VAR', 'MLP', 'Ensemble'), 
+                 'ASE'= c(ase.arma.forecasts.one.day.rounded, ase.var.forecasts.one.day.rounded, ase.mlp.forecasts.one.day.rounded, ase.ensemble.forecasts.one.day.rounded)),
+      "latex", booktabs = T)
+
 
 ```
 
 
+
+
 ### RMSE
 
-[Make a table]
 
-```{r ensemble-one-day-forecast-rmse, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+```{r ensemble-one-day-forecast-rmse, message=FALSE, echo=FALSE}
 
 
-sqrt(mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (ARMA)`)^2))
+rmse.arma.forecasts.one.day.rounded <- sqrt(mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (ARMA)`)^2))
 
-sqrt(mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (VAR)`)^2))
+rmse.var.forecasts.one.day.rounded <- sqrt(mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (VAR)`)^2))
 
-sqrt(mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (MLP)`)^2))
+rmse.mlp.forecasts.one.day.rounded <- sqrt(mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (MLP)`)^2))
 
-sqrt(mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (Ensemble)`)^2))
+rmse.ensemble.forecasts.one.day.rounded <- sqrt(mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (Ensemble)`)^2))
+
+
+kable(data.frame('Model' = c('ARMA', 'VAR', 'MLP', 'Ensemble'), 
+                 'RMSE'= c(rmse.arma.forecasts.one.day.rounded, rmse.var.forecasts.one.day.rounded, rmse.mlp.forecasts.one.day.rounded, rmse.ensemble.forecasts.one.day.rounded)),
+      "latex", booktabs = T)
 
 
 ```
@@ -1161,8 +1241,12 @@ sqrt(mean((df.ensemble.one.day$`Actual` - df.ensemble.one.day$`Predicted (Ensemb
 # Appendix
  
 ## Solution One
+
+Log Transform the response variable
  
 ## Solution Two
+
+Use all monthly data leading up to June 2012 
 
 
 
