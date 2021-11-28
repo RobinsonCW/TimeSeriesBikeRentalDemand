@@ -535,14 +535,90 @@ A peak can be seen in the spectral density at around 0.04.  Which would equate t
 
 \pagebreak
 
-```{r differncing-d1-june-2012, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+```{r arma-seasonal-forecasts-june-2012-one, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 
-count.d1 = artrans.wge(train.2012.june$count, phi.tr = 1)
+count.d24 = artrans.wge(train.2012.june$count, phi.tr = c(rep(0,23), 1))
 
-plotts.sample.wge(count.d1)
+plotts.sample.wge(count.d24)
+
+# aic5.wge(count.d24, p=0:15, q=0:2, type = "aic") # AIC picks ARMA (10,0)
+
+est.2012.june.d24 = est.arma.wge(count.d24, p=10, q=0)
+
+est.2012.june.d24$phi
+est.2012.june.d24$theta
+est.2012.june.d24$avar
+
+mean(train.2012.june$count)
+
+plotts.wge(est.2012.june.d24$res)
+
+```
+
+```{r arma-seasonal-forecasts-june-2012-one-plot, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+
+plotts.sample.wge(count.d24)
+
+```
+
+
+```{r arma-seasonal-forecasts-june-2012-two, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+
+mean(train.2012.june$count)
+
+df <- train.2012.june
+
+no_ahead = 24
+
+len_of_obs = length(df$datetime)
+
+forecast.2012.june.d24 = fore.aruma.wge(df$count, s = 24, phi = est.2012.june.d24$phi, n.ahead = no_ahead, lastn = TRUE, limits = FALSE, plot = FALSE)
+
+ase.arma.forecasts.one.day.s24 = mean((df$count[(len_of_obs - no_ahead + 1): len_of_obs] - forecast.2012.june.d24$f)^2)
+ase.arma.forecasts.one.day.s24
+
+rmse.arma.forecasts.one.day.s24 = RMSE(y_true = df$count[(len_of_obs - no_ahead + 1): len_of_obs], y_pred = forecast.2012.june.d24$f)
+rmse.arma.forecasts.one.day.s24
 
 
 ```
+
+```{r arma-seasonal-forecasts-june-2012-three, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+
+forecasts.arma.seasonal.one.day = round(forecast.2012.june.d24$f)
+# set point forecast to 1 when less than 0
+forecasts.arma.seasonal.one.day[forecasts.arma.seasonal.one.day < 0] <- 1
+
+```
+
+
+\pagebreak
+
+
+```{r arma-seasonal-forecasts-june-2012-plot, message=FALSE, echo=FALSE, warning=FALSE}
+
+df2 <- data.frame(real = df$count,
+          pred = c(rep(NA,length(df$datetime)-length(data.frame(forecasts.arma.seasonal.one.day)[,1])),data.frame(forecasts.arma.seasonal.one.day)[,1]),
+          time = df$datetime)
+
+plot.arma.one.day.d24 <- ggplot(df2, aes(time, real, group = 1 )) +
+  geom_line() + 
+  geom_line(aes(time, pred, group = 1), color = "red")+
+  ggtitle("1 Day Forecast (ARMA w/ S=24)") +
+  labs(x = "Day", y = "Count") + 
+  scale_x_datetime(date_breaks = "1 day", date_labels = "%d")
+
+plot.arma.one.day.d24
+
+```
+
+
+An attempt to make the time series more stationary was made with a 24th order difference.  AIC recommended an ARMA(10,0) model on the residuals. We then fit the original data with the recommended phi's with a seasonal component to make for an ARIMA(10,0,0); s = 24 model.  As shown later in our write-up, the ARIMA model was not quite as effective as those without differencing or a seasonal adjustment.  It will therefore be removed from further analysis and comparisons to other models.
+
+- **ASE** `r round(ase.arma.forecasts.one.day.s24, 3)`
+
+- **RMSE** `r round(rmse.arma.forecasts.one.day.s24, 3)`
+
 
 ```{r aic5-wge-june-2012, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 
@@ -568,27 +644,24 @@ plotts.sample.wge(count.d1)
 
 
 
-```{r est-arma-wge-june-2012, results='hide', message=FALSE, include=FALSE, echo=FALSE}
-
-est.2012.june = est.arma.wge(train.2012.june$count, p=25, q=1)
-
-est.2012.june$phi
-est.2012.june$theta
-est.2012.june$avar
-
-mean(train.2012.june$count)
-
-```
-
-
 <!-- $$\begin{equation} -->
 <!--    (1-0.80B+0.15B^2+0.04B^3-0.05B^4+0.02B^5+0.09B^6-0.09B^7+0.30B^8-0.34B^9+0.10B^{10}+0.12B^{11}-0.06B^{12}+0.03B^{13} + 0.05B^{14}-0.09B^{15}+0.20B^{16}-0.16B^{17}+0.05B^{18}+0.10B^{19}-0.06B^{20}-0.003B^{21}+0.06B^{22}-0.13B^{23}-0.45B^{24}+0.31B^{25})(X_t - 287.18) = (1+0.30B)a_t; \sigma^2 = 5623.31 -->
 <!-- \end{equation}$$ -->
 
 
+```{r est-arma-wge-june-2012, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+
+est.2012.june = est.arma.wge(train.2012.june$count, p=25, q=1)
+est.2012.june$phi
+est.2012.june$theta
+est.2012.june$avar
+mean(train.2012.june$count)
+
+```
+
 ```{r plot-residusals-est-june-2012, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 
-plotts.wge(est.2012.june$res)
+# plotts.wge(est.2012.june$res)
 
 ```
 
@@ -621,21 +694,8 @@ rmse.arma.forecasts.seven.days
 
 
 forecasts.arma.25.1.seven.days = round(forecast.2012.june$f)
-
-# set point forecast to 0 when less than 0
+# set point forecast to 1 when less than 0
 forecasts.arma.25.1.seven.days[forecasts.arma.25.1.seven.days < 0] <- 1
-
-# predictions = round(forecast.2012.june$f)
-# actuals = train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs]
-# 
-# preds.v.actuals.2012.june <- data.frame(predictions, actuals)    # Apply data.frame function
-# 
-# 
-# preds.v.actuals.2012.june <- preds.v.actuals.2012.june %>%
-#   mutate(diff = (round(predictions) - actuals)) %>%
-#   mutate(abs.diff = abs(round(predictions) - actuals))
-# 
-# preds.v.actuals.2012.june
 
 ```
 
@@ -675,8 +735,6 @@ len_of_obs = length(df$datetime)
 
 forecast.2012.june = fore.aruma.wge(df$count, phi = est.2012.june$phi, theta = est.2012.june$theta, n.ahead = no_ahead, lastn = TRUE, limits = FALSE, plot = FALSE)
 
-# plot(df$count[1:len_of_obs], type = "l", xlab = "Time", ylab = "Count", main = "1 Day Forecast (ARMA)")
-# lines(seq(433,456), forecast.2012.june$f, col = "red")
 
 ase.arma.forecasts.one.day = mean((df$count[(len_of_obs - no_ahead + 1): len_of_obs] - forecast.2012.june$f)^2)
 ase.arma.forecasts.one.day
@@ -690,20 +748,7 @@ rmse.arma.forecasts.one.day
 ```{r arma-forecasts-one-day-two, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 
 forecasts.arma.25.1.one.day = round(forecast.2012.june$f)
-
 forecasts.arma.25.1.one.day[forecasts.arma.25.1.one.day < 0] <- 1
-
-# predictions = round(forecast.2012.june$f)
-# actuals = train.2012.june$count[(len_of_obs - no_ahead + 1): len_of_obs]
-# 
-# preds.v.actuals.2012.june <- data.frame(predictions, actuals)    # Apply data.frame function
-# 
-# 
-# preds.v.actuals.2012.june <- preds.v.actuals.2012.june %>%
-#   mutate(diff = (round(predictions) - actuals)) %>%
-#   mutate(abs.diff = abs(round(predictions) - actuals))
-# 
-# preds.v.actuals.2012.june
 
 ```
 
@@ -780,12 +825,52 @@ roll.win.ase.wge = function(series, horizon = 1, s = 0, d = 0, phis = 0, thetas 
 
 ```
 
+\pagebreak
 
-```{r roll-win-ase-wge-function-output, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+```{r roll-win-ase-wge-function-code, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 
-# roll.win.ase.wge(train.2012.june$count, horizon = 24, est.2012.june$phi, est.2012.june$theta, s = 0, d = 0)
+# roll.win.ase.wge(train.2012.june$count, horizon = 24*7, est.2012.june$phi, est.2012.june$theta, s = 0, d = 0)
 
 ```
+
+### Long-Term Rolling Window ASE (7-Days)
+
+```{r long-term-roll-win-ase-wge-function-output, message=FALSE, echo=FALSE}
+
+# use when knitting the pdf file
+knitr::include_graphics('../../images/long_term_rolling_windows_ase.png')
+
+# use when running the code
+# knitr::include_graphics('./images/long_term_rolling_windows_ase.png')
+
+
+```
+
+
+- 30,053 (mean)
+- 27,033 (median)
+
+
+\pagebreak
+
+### Short-Term Rolling Window ASE (1-Day)
+
+```{r short-term-roll-win-ase-wge-function-output, message=FALSE, echo=FALSE}
+
+# use when knitting the pdf file
+knitr::include_graphics('../../images/short_term_rolling_windows_ase.png')
+
+# use when running the code
+# knitr::include_graphics('./images/short_term_rolling_windows_ase.png')
+
+```
+
+
+- 17,002 (mean)
+- 10,648 (median)
+
+
+Note that the mean is much higher than the median, which would indicate a more skewed distribution as evidences by the chart above.
 
 
 \pagebreak
@@ -1303,10 +1388,17 @@ Log Transform the response variable
  
 ## Solution Two
 
-Can additional data from previous month(s) aid in lowering the ASE and RMSE?  
+Can additional data from previous month(s) aid in lowering the ASE and RMSE?  We will focus on using an MLP neural network with additional input features to test our hypothesis when forecasting the short-term counts for the month of June, 2012.
 
 
-Including data from May, 2012 seemed to indicate that you could, albeit marginally.  However, attempting to use observations from more than 2 months out was detrimental to the model's performance.
+Including training data from May seemed to indicate that you could, albeit marginally as shown below, improve over the previous ARMA, VAR and MLP metrics that only used training data from June 2012.
+
+However, attempting to use observations from more than 2 months out was detrimental to the model's performance.  
+
+Due to our data not being continuous in the sense that we only have bike rental counts for the first 19 days of each month, we cannot make use of all of the available training data easily.
+
+Although not a very likely example to be encountered in a real world setting, it does offer some evidence that having more available data to train your model with can offer benefits.  But having a continuous time-series and more observations would have been preferred.
+
 
 
 
@@ -1373,7 +1465,7 @@ plot.arma.one.day.2
 
 Our MLP model with both May and June training data resulted in an ASE score of `r round(ase.mlp.forecasts.one.day.2, 3)`.
 
-And the RMSE stood at `r round(rmse.mlp.forecasts.one.day.2, 3)`.
+And the RMSE stood at `r round(rmse.mlp.forecasts.one.day.2, 3)`.  Again, these are both improvements over previous short-term model forecasts.
 
 
 
