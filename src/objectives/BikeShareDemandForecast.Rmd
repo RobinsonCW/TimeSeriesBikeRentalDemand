@@ -1,7 +1,7 @@
 ---
 title: "Bike Share Demand Forecasting Methods"
 author: "Chance Robinson and Kebur Fantahun"
-date: 11/22/2021
+date: 11/28/2021
 lang: en-US
 class: man
 # figsintext: true
@@ -63,9 +63,13 @@ library(nnfor)
 
 setwd(".")
 
+# use when knitting the pdf file
 train <- read.csv("../../data/train.csv")
-
 test <- read.csv("../../data/test.csv")
+
+# use when running the code
+# train <- read.csv("./data/train.csv")
+# test <- read.csv("./data/test.csv")
 
 # copy the test and train data sets for EDA
 train.c1 <- train
@@ -216,7 +220,7 @@ train.c1 %>%
 
 ```
 
-Fall appears to have more rentals on average than the other seasons.
+Fall looks to have more rentals on average than the other seasons.
 
 ```{r boxplot-average-hourly-bike-count-by-season-full, message=FALSE, echo=FALSE}
 
@@ -339,7 +343,7 @@ train.c1 %>%
 ```
 
 
-The same was true for the day falling on a holiday, it appeared to have little affect on the counts.
+The same was true for days falling on a holiday, it appeared to have little affect on the counts.
 
 ```{r boxplot-average-hourly-bike-count-by-holiday-full, message=FALSE, echo=FALSE}
 
@@ -387,7 +391,7 @@ flattenCorrMatrix <- function(cormat, pmat) {
 ```
 
 
-The plot below shows a strong correlation between casual, registered and total (count) users.  We will use count as the primary response variable for our modeling, and discard the other response variables.
+The plot above shows a strong correlation between casual, registered and total (count) users.  We will use count as the primary response variable for our modeling, and discard the other secondary response variables.
 
 Note that temp and atemp are also closely related to one another as would be expected.
 
@@ -420,7 +424,9 @@ train.c1 %>%
   
 ```
 
-```{r linechart-hourly-bike-count-by-feels-like-tempurature-full, message=FALSE, echo=FALSE}
+In general, recordings with warmer temperatures have more riders up to a threshold, which looks to start to decline around 34 degrees Celsius (~93 degrees Fahrenheit)
+
+```{r linechart-hourly-bike-count-by-feels-like-tempurature-full, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 train.c1 %>%
   ggplot(aes(x = atemp, y = count)) + 
   geom_point(alpha = 0.3) + 
@@ -432,7 +438,7 @@ train.c1 %>%
 
 \pagebreak
 
-```{r linechart-hourly-bike-count-by-windspeed-full, message=FALSE, echo=FALSE}
+```{r linechart-hourly-bike-count-by-windspeed-full, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 
 train.c1 %>%
   ggplot(aes(x = temp, y = count)) + 
@@ -453,6 +459,8 @@ train.c1 %>%
   labs(x = "Humidity", y = "Count")
   
 ```
+
+Humidity shows a negative trend, with recordings during high-humidity periods showing fewer riders.
 
 \pagebreak
 
@@ -475,6 +483,8 @@ ggplot(data=train.2012.june, aes(x = datetime, y = count)) +
 
 ```
 
+This plot shows the hourly bike rental counts for the first 19 days of June, 2019.
+
 \pagebreak
 
 
@@ -485,18 +495,20 @@ ggplot(data=train.2012.june, aes(x = datetime, y = count)) +
 
 ```{r plotts-sample-wge-june-2012, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 
-p1 <- plotts.sample.wge(train.2012.june$count)
+plotts.sample.wge(train.2012.june$count)
 
 ```
 
 
 \pagebreak
 
-```{r acf-june-2012, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+```{r acf-june-2012, results='hide', message=FALSE, echo=FALSE}
 
-Acf(train.2012.june$count, lag.max = 50)
+plot(Acf(train.2012.june$count, lag.max = 50, plot = FALSE),  main = "Auto-Correlation Plot of Count")
 
 ```
+
+Strong sinusoidal trend with a period of 24, which would likely reflect the hourly cycles from how the data was recorded.
 
 \pagebreak
 
@@ -506,6 +518,22 @@ plotts.parzen.wge(train.2012.june$count)
 
 ```
 
+```{r plotts-parzen-wge-june-2012-plot, message=FALSE, echo=FALSE}
+
+# use when knitting the pdf file
+knitr::include_graphics('../../images/spectral_density.png')
+
+# use when running the code
+# knitr::include_graphics('./images/spectral_density.png')
+
+
+```
+
+
+A peak can be seen in the spectral density at around 0.04.  Which would equate to a period of 24, which is what would be expected again from the frequency of our data set.  You can also visually confirm this from the number of cycles in the realization and divide that by the total number of observations.  (19 / 456 ~ 0.0417)  From there the period can be calculated with 1 / frequency.  (or ~24)
+
+
+\pagebreak
 
 ```{r differncing-d1-june-2012, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 
@@ -629,6 +657,12 @@ plot.arma.seven.days
 
 ```
 
+
+- **ASE** `r round(ase.arma.forecasts.seven.days, 3)`
+
+- **RMSE** `r round(rmse.arma.forecasts.seven.days, 3)`
+
+
 ```{r arma-forecasts-one-day-one, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 
 # 1 day forecast
@@ -692,6 +726,10 @@ plot.arma.one.day <- ggplot(df2, aes(time, real, group = 1 )) +
 plot.arma.one.day
 
 ```
+
+- **ASE** `r round(ase.arma.forecasts.one.day, 3)`
+
+- **RMSE** `r round(rmse.arma.forecasts.one.day, 3)`
 
 
 ```{r roll-win-ase-wge-function-definition, results='hide', message=FALSE, include=FALSE, echo=FALSE}
@@ -758,12 +796,10 @@ roll.win.ase.wge = function(series, horizon = 1, s = 0, d = 0, phis = 0, thetas 
 ### Cross-Correlation
 
 
-**Temperature**
 
 ```{r var-ccf-count-temp, message=FALSE, echo=FALSE}
 
-ccf(train.2012.june$temp, train.2012.june$count)
-
+plot(ccf(train.2012.june$temp, train.2012.june$count, lag.max = 25, plot = FALSE), main = "Cross-Correlation of Tempurature and Count")
 
 # lag 0 = 0.473
 
@@ -772,11 +808,10 @@ ccf(train.2012.june$temp, train.2012.june$count)
 
 \pagebreak
 
-**Humidity**
 
 ```{r var-ccf-count-humidity, message=FALSE, echo=FALSE}
 
-ccf(train.2012.june$humidity, train.2012.june$count, lag.max = 25)
+plot(ccf(train.2012.june$humidity, train.2012.june$count, lag.max = 25, plot = FALSE), main = "Cross-Correlation of Humidity and Count")
 
 # lag 0 = -0.535
 
@@ -785,11 +820,10 @@ ccf(train.2012.june$humidity, train.2012.june$count, lag.max = 25)
 
 \pagebreak
 
-**Weather**
 
 ```{r var-ccf-count-weather, message=FALSE, echo=FALSE}
 
-ccf(train.2012.june$weather, train.2012.june$count, lag.max = 25)
+plot(ccf(train.2012.june$weather, train.2012.june$count, lag.max = 25, plot = FALSE), main = "Cross-Correlation of Weather and Count")
 
 # lag 0 = -0.212
 
@@ -798,11 +832,11 @@ ccf(train.2012.june$weather, train.2012.june$count, lag.max = 25)
 
 \pagebreak
 
-**Hour**
 
 ```{r var-ccf-count-hour, message=FALSE, echo=FALSE}
 
-ccf(train.2012.june$hour, train.2012.june$count, lag.max = 25)
+
+plot(ccf(train.2012.june$hour, train.2012.june$count, lag.max = 25, plot = FALSE), main = "Cross-Correlation of Hour and Count")
 
 # lag 21 = 0.642
 
@@ -884,7 +918,7 @@ df2 <- data.frame(real = df$count,
           pred = c(rep(NA,length(df$count)-length(data.frame(forecasts.1.var.seven.days)[,1])),data.frame(forecasts.1.var.seven.days)[,1]),
           time = df$datetime)
 
-plot.arma.one.day <- ggplot(df2, aes(time, real, group = 1 )) +
+plot.var.seven.days <- ggplot(df2, aes(time, real, group = 1 )) +
   geom_line() + 
   geom_line(aes(time, pred, group = 1), color = "red")+
   ggtitle("7 Day Forecast (VAR)") +
@@ -892,10 +926,13 @@ plot.arma.one.day <- ggplot(df2, aes(time, real, group = 1 )) +
   scale_x_datetime(date_breaks = "1 day", date_labels = "%d")
 
 
-plot.arma.one.day
+plot.var.seven.days
 
 ```
 
+- **ASE** `r round(ase.var.forecasts.seven.days, 3)`
+
+- **RMSE** `r round(rmse.var.2012.seven.days, 3)`
 
 
 \pagebreak
@@ -948,7 +985,7 @@ df2 <- data.frame(real = df$count,
           pred = c(rep(NA,length(df$count)-length(data.frame(forecasts.1.var.one.day)[,1])),data.frame(forecasts.1.var.one.day)[,1]),
           time = df$datetime)
 
-plot.arma.one.day <- ggplot(df2, aes(time, real, group = 1 )) +
+plot.var.one.day <- ggplot(df2, aes(time, real, group = 1 )) +
   geom_line() + 
   geom_line(aes(time, pred, group = 1), color = "red")+
   ggtitle("1 Day Forecast (VAR)") +
@@ -956,9 +993,15 @@ plot.arma.one.day <- ggplot(df2, aes(time, real, group = 1 )) +
   scale_x_datetime(date_breaks = "1 day", date_labels = "%d")
 
 
-plot.arma.one.day
+plot.var.one.day
 
 ```
+
+
+- **ASE** `r round(ase.var.forecasts.one.day, 3)`
+
+- **RMSE** `r round(rmse.var.forecasts.one.day, 3)`
+
 
 \pagebreak
 
@@ -1010,7 +1053,7 @@ df2 <- data.frame(real = df$count,
           pred = c(rep(NA,length(df$count)-length(data.frame(forecasts.mlp.seven.days)[,1])),data.frame(forecasts.mlp.seven.days)[,1]),
           time = df$datetime)
 
-plot.arma.one.day <- ggplot(df2, aes(time, real, group = 1 )) +
+plot.mlp.seven.days <- ggplot(df2, aes(time, real, group = 1 )) +
   geom_line() + 
   geom_line(aes(time, pred, group = 1), color = "red")+
   ggtitle("7 Day Forecast (MLP)") +
@@ -1018,9 +1061,14 @@ plot.arma.one.day <- ggplot(df2, aes(time, real, group = 1 )) +
   scale_x_datetime(date_breaks = "1 day", date_labels = "%d")
 
 
-plot.arma.one.day
+plot.mlp.seven.days
 
 ```
+
+- **ASE** `r round(ase.mlp.forecasts.seven.days, 3)`
+
+- **RMSE** `r round(rmse.mlp.forecasts.seven.days, 3)`
+
 
 
 \pagebreak
@@ -1045,10 +1093,10 @@ test_start = train_stop + 1
 ts.count = ts(df$count[1:train_stop])
 ts.count.x = data.frame(temp = ts(df$temp), humidity = ts(df$humidity), 
                         weather = ts(df$weather), hour = ts(df$hour))
+
 set.seed(42)
 
-# xreg.lags = c(1,1,1,24),   << For some reason, the code will not run with these in
-fit.mlp.one.day = mlp(ts.count, hd = 5, xreg = ts.count.x, lags = no_ahead, allow.det.season = FALSE)
+fit.mlp.one.day = mlp(ts.count, hd = 6, xreg = ts.count.x, lags = no_ahead, difforder = 0, allow.det.season = FALSE, sel.lag = FALSE)
 plot(fit.mlp.one.day)
 
 forecasts.mlp.one.day = forecast(fit.mlp.one.day, h = no_ahead, xreg = ts.count.x)
@@ -1064,13 +1112,14 @@ rmse.mlp.forecasts.one.day
 
 ```
 
+
 ```{r mlp-one-day-forecast-plot, message=FALSE, echo=FALSE, warning=FALSE}
 
 df2 <- data.frame(real = df$count,
           pred = c(rep(NA,length(df$count)-length(data.frame(forecasts.mlp.one.day)[,1])),data.frame(forecasts.mlp.one.day)[,1]),
           time = df$datetime)
 
-plot.arma.one.day <- ggplot(df2, aes(time, real, group = 1 )) +
+plot.mlp.one.day <- ggplot(df2, aes(time, real, group = 1 )) +
   geom_line() + 
   geom_line(aes(time, pred, group = 1), color = "red")+
   ggtitle("1 Day Forecast (MLP)") +
@@ -1078,9 +1127,14 @@ plot.arma.one.day <- ggplot(df2, aes(time, real, group = 1 )) +
   scale_x_datetime(date_breaks = "1 day", date_labels = "%d")
 
 
-plot.arma.one.day
+plot.mlp.one.day
 
 ```
+
+
+- **ASE** `r round(ase.mlp.forecasts.one.day, 3)`
+
+- **RMSE** `r round(rmse.mlp.forecasts.one.day, 3)`
 
 
 \pagebreak
@@ -1109,7 +1163,7 @@ df.ensemble.seven.days <- df.ensemble.seven.days %>%
 
 ```{r ensemble-seven-day-forecast-plot, message=FALSE, echo=FALSE}
 
-knitr::kable(head(df.ensemble.seven.days))
+knitr::kable(head(df.ensemble.seven.days, 30))
 
 ```
 
@@ -1136,7 +1190,7 @@ df.ensemble.one.day <- df.ensemble.one.day %>%
 
 ```{r ensemble-one-day-forecast-plot, message=FALSE, echo=FALSE}
 
-knitr::kable(head(df.ensemble.one.day))
+knitr::kable(df.ensemble.one.day)
 
 ```
 
@@ -1236,6 +1290,7 @@ kable(data.frame('Model' = c('ARMA', 'VAR', 'MLP', 'Ensemble'),
 
 ```
 
+
 \pagebreak
 
 # Appendix
@@ -1243,14 +1298,82 @@ kable(data.frame('Model' = c('ARMA', 'VAR', 'MLP', 'Ensemble'),
 ## Solution One
 
 Log Transform the response variable
+
+\pagebreak
  
 ## Solution Two
 
-Use all monthly data leading up to June 2012 
+Can additional data from previous month(s) aid in lowering the ASE and RMSE?  
+
+
+Including data from May, 2012 seemed to indicate that you could, albeit marginally.  However, attempting to use observations from more than 2 months out was detrimental to the model's performance.
 
 
 
+```{r mlp-one-day-forecast-two, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 
+
+train.2012.may.june <-  train.c1 %>%
+  filter(train.c1$datetime >= ymd_hms("2012-05-01 00:00:00"))
+
+train.2012.may.june <-  train.2012.may.june %>%
+  filter(train.2012.may.june$datetime < ymd_hms("2012-07-01 00:00:00"))
+
+
+df <- train.2012.may.june
+
+
+no_ahead = 24
+
+len_of_obs = length(df$datetime)
+
+train_stop = len_of_obs - no_ahead
+test_start = train_stop + 1
+
+
+ts.count = ts(df$count[1:train_stop])
+ts.count.x = data.frame(temp = ts(df$temp), humidity = ts(df$humidity),
+                        weather = ts(df$weather), hour = ts(df$hour), workingday = ts(df$workingday))
+
+
+set.seed(42)
+
+fit.mlp.one.day.2 = mlp(ts.count, hd = 6, xreg = ts.count.x, lags = 168, difforder = 0, allow.det.season = FALSE, sel.lag = FALSE, reps = 5)
+plot(fit.mlp.one.day.2)
+
+forecasts.mlp.one.day.2 = forecast(fit.mlp.one.day.2, h = no_ahead, xreg = ts.count.x)
+
+
+ase.mlp.forecasts.one.day.2 = mean((df$count[test_start:len_of_obs] - forecasts.mlp.one.day.2$mean)^2)
+ase.mlp.forecasts.one.day.2
+
+rmse.mlp.forecasts.one.day.2 = sqrt(mean((df$count[test_start:len_of_obs] - forecasts.mlp.one.day.2$mean)^2))
+rmse.mlp.forecasts.one.day.2
+
+```
+
+
+```{r mlp-one-day-forecast-two-plot, message=FALSE, echo=FALSE, warning=FALSE}
+
+df2 <- data.frame(real = df$count,
+          pred = c(rep(NA,length(df$count)-length(data.frame(forecasts.mlp.one.day.2)[,1])),data.frame(forecasts.mlp.one.day.2)[,1]),
+          time = df$datetime)
+
+plot.arma.one.day.2 <- ggplot(df2, aes(time, real, group = 1 )) +
+  geom_line() + 
+  geom_line(aes(time, pred, group = 1), color = "red")+
+  ggtitle("1 Day Forecast (MLP)") +
+  labs(x = "Day", y = "Count")
+
+
+plot.arma.one.day.2
+
+```
+
+
+Our MLP model with both May and June training data resulted in an ASE score of `r round(ase.mlp.forecasts.one.day.2, 3)`.
+
+And the RMSE stood at `r round(rmse.mlp.forecasts.one.day.2, 3)`.
 
 
 
