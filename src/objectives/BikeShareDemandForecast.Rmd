@@ -61,15 +61,11 @@ library(nnfor)
 
 ```{r load-data, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 
-setwd(".")
+# use when running the code and disable when knitting the pdf 
+# setwd("./src/objectives/")
 
-# use when knitting the pdf file
 train <- read.csv("../../data/train.csv")
 test <- read.csv("../../data/test.csv")
-
-# use when running the code
-# train <- read.csv("./data/train.csv")
-# test <- read.csv("./data/test.csv")
 
 # copy the test and train data sets for EDA
 train.c1 <- train
@@ -520,12 +516,7 @@ plotts.parzen.wge(train.2012.june$count)
 
 ```{r plotts-parzen-wge-june-2012-plot, message=FALSE, echo=FALSE}
 
-# use when knitting the pdf file
 knitr::include_graphics('../../images/spectral_density.png')
-
-# use when running the code
-# knitr::include_graphics('./images/spectral_density.png')
-
 
 ```
 
@@ -837,12 +828,7 @@ roll.win.ase.wge = function(series, horizon = 1, s = 0, d = 0, phis = 0, thetas 
 
 ```{r long-term-roll-win-ase-wge-function-output, message=FALSE, echo=FALSE}
 
-# use when knitting the pdf file
 knitr::include_graphics('../../images/long_term_rolling_windows_ase.png')
-
-# use when running the code
-# knitr::include_graphics('./images/long_term_rolling_windows_ase.png')
-
 
 ```
 
@@ -857,11 +843,7 @@ knitr::include_graphics('../../images/long_term_rolling_windows_ase.png')
 
 ```{r short-term-roll-win-ase-wge-function-output, message=FALSE, echo=FALSE}
 
-# use when knitting the pdf file
 knitr::include_graphics('../../images/short_term_rolling_windows_ase.png')
-
-# use when running the code
-# knitr::include_graphics('./images/short_term_rolling_windows_ase.png')
 
 ```
 
@@ -954,7 +936,7 @@ lsfit = VAR(X, p = 22, type = "const", ic = c("AIC"))
 
 \pagebreak
 
-###  7 Day Forecast
+### 7 Day Forecast
 
 ```{r var-seven-days-forecast-one, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 
@@ -964,6 +946,14 @@ forecasts.var.seven.days = predict(lsfit, n.ahead = no_ahead)
 
 ```
 
+
+```{r var-seven-days-forecast-prediction-limits, message=FALSE, echo=FALSE}
+
+knitr::kable(head(data.frame(forecasts.var.seven.days$fcst$y1), 30), "latex", booktabs = T)
+
+```
+
+\pagebreak
 
 ```{r var-seven-days-forecast-two, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 
@@ -1033,6 +1023,15 @@ forecasts.var.one.day = predict(lsfit, n.ahead = no_ahead)
 ```
 
 
+
+```{r var-one-day-forecast-prediction-limits, message=FALSE, echo=FALSE}
+
+knitr::kable(data.frame(forecasts.var.one.day$fcst$y1), "latex", booktabs = T)
+
+```
+
+\pagebreak
+
 ```{r var-one-day-forecast-two, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 
 forecasts.1.var.one.day = forecasts.var.one.day$fcst$y1[,1]
@@ -1063,6 +1062,7 @@ rmse.var.forecasts.one.day = RMSE(y_true = df$count[(len_of_obs - no_ahead + 1):
 rmse.var.forecasts.one.day
 
 ```
+
 
 ```{r var-one-day-forecast-plot, message=FALSE, echo=FALSE, warning=FALSE}
 
@@ -1383,6 +1383,133 @@ kable(data.frame('Model' = c('ARMA', 'VAR', 'MLP', 'Ensemble'),
 ## Solution One
 
 Log Transform the response variable
+
+Note that the p and q estimates were made from the logged count, and AIC picked and ARMA(25,2) as opposed to an ARMA(25,1) as had been previously used.
+
+### 7 Day Forecast
+
+```{r arma-logged-count-forecasts-seven-days-one, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+
+# 7 day forecast
+
+df <- train.2012.june
+
+df$lcount <- log(df$count)
+
+# aic5.wge(df$lcount, p=20:26, q=0:2, type = "aic") # AIC picks ARMA (25,2)
+
+est.2012.june = est.arma.wge(df$lcount, p=25, q=2)
+est.2012.june$phi
+est.2012.june$theta
+est.2012.june$avar
+
+no_ahead = 24 * 7
+
+len_of_obs = length(df$datetime)
+
+forecast.2012.june = fore.aruma.wge(df$lcount, phi = est.2012.june$phi, theta = est.2012.june$theta, n.ahead = no_ahead, lastn = TRUE, limits = FALSE, plot = FALSE)
+
+
+ase.arma.forecasts.seven.days.logged = mean((df$count[(len_of_obs - no_ahead + 1): len_of_obs] - exp(forecast.2012.june$f))^2)
+ase.arma.forecasts.seven.days.logged
+
+
+rmse.arma.forecasts.seven.days.logged = RMSE(y_true = df$count[(len_of_obs - no_ahead + 1): len_of_obs], y_pred = exp(forecast.2012.june$f))
+rmse.arma.forecasts.seven.days.logged
+
+
+```
+
+```{r arma-logged-count-forecasts-seven-days-two, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+
+forecasts.arma.25.2.seven.days.logged = round(exp(forecast.2012.june$f))
+# set point forecast to 1 when less than 0
+forecasts.arma.25.2.seven.days.logged[forecasts.arma.25.2.seven.days.logged < 0] <- 1
+
+```
+
+
+```{r arma-logged-count-forecasts-seven-days-three, message=FALSE, echo=FALSE, warning=FALSE}
+
+df2 <- data.frame(real = df$count,
+          pred = c(rep(NA,length(df$datetime)-length(data.frame(forecasts.arma.25.2.seven.days.logged)[,1])),data.frame(forecasts.arma.25.2.seven.days.logged)[,1]),
+          time = df$datetime)
+
+plot.arma.seven.days.logged <- ggplot(df2, aes(time, real, group = 1 )) +
+  geom_line() + 
+  geom_line(aes(time, pred, group = 1), color = "red")+
+  ggtitle("7 Day Forecast (ARMA)") +
+  labs(x = "Day", y = "Count") + 
+  scale_x_datetime(date_breaks = "1 day", date_labels = "%d")
+
+plot.arma.seven.days.logged
+
+```
+
+
+- **ASE** `r round(ase.arma.forecasts.seven.days.logged, 3)`
+
+- **RMSE** `r round(rmse.arma.forecasts.seven.days.logged, 3)`
+
+\pagebreak
+
+### 1 Day Forecast
+
+```{r arma-logged-count-forecasts-one-day-one, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+
+# 1 day forecast
+
+df <- train.2012.june
+
+df$lcount <- log(df$count)
+
+no_ahead = 24
+
+len_of_obs = length(df$datetime)
+
+forecast.2012.june = fore.aruma.wge(df$lcount, phi = est.2012.june$phi, theta = est.2012.june$theta, n.ahead = no_ahead, lastn = TRUE, limits = FALSE, plot = FALSE)
+
+
+ase.arma.forecasts.one.day.logged = mean((df$count[(len_of_obs - no_ahead + 1): len_of_obs] - exp(forecast.2012.june$f))^2)
+ase.arma.forecasts.one.day.logged
+
+rmse.arma.forecasts.one.day.logged = RMSE(y_true = df$count[(len_of_obs - no_ahead + 1): len_of_obs], y_pred = exp(forecast.2012.june$f))
+rmse.arma.forecasts.one.day.logged
+
+
+```
+
+```{r arma-logged-count-forecasts-one-day-two, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+
+forecasts.arma.25.2.one.day.logged = round(exp(forecast.2012.june$f))
+forecasts.arma.25.2.one.day.logged[forecasts.arma.25.2.one.day.logged < 0] <- 1
+
+```
+
+
+
+```{r arma-logged-count-forecasts-one-day-three, message=FALSE, echo=FALSE, warning=FALSE}
+
+df2 <- data.frame(real = df$count,
+          pred = c(rep(NA,length(df$count)-length(data.frame(forecasts.arma.25.2.one.day.logged)[,1])),data.frame(forecasts.arma.25.2.one.day.logged)[,1]),
+          time = df$datetime)
+
+plot.arma.one.day.logged <- ggplot(df2, aes(time, real, group = 1 )) +
+  geom_line() + 
+  geom_line(aes(time, pred, group = 1), color = "red")+
+  ggtitle("1 Day Forecast (ARMA)") +
+  labs(x = "Day", y = "Count") + 
+  scale_x_datetime(date_breaks = "1 day", date_labels = "%d")
+
+
+plot.arma.one.day.logged
+
+```
+
+- **ASE** `r round(ase.arma.forecasts.one.day.logged, 3)`
+
+- **RMSE** `r round(rmse.arma.forecasts.one.day.logged, 3)`
+
 
 \pagebreak
  
