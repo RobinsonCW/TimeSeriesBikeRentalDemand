@@ -1,7 +1,7 @@
 ---
 title: "Bike Share Demand Forecasting Methods"
 author: "Chance Robinson and Kebur Fantahun"
-date: 11/28/2021
+date: 12/1/2021
 lang: en-US
 class: man
 # figsintext: true
@@ -62,7 +62,7 @@ library(nnfor)
 ```{r load-data, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 
 # use when running the code and disable when knitting the pdf 
-# setwd("./src/objectives/")
+setwd("./src/objectives/")
 
 train <- read.csv("../../data/train.csv")
 test <- read.csv("../../data/test.csv")
@@ -104,8 +104,9 @@ test.c1 <- test.c1 %>%
 
 # Introduction
 
+Bike-sharing is a popular service that allows people to pick up a bike from one dock, use it and return it to the same or another docking station all for a small fee, sometimes for free. As opposed to transport like cars, bikes offer an inexpensive, eco-friendly option to urban people by promoting less pollution and dealing with less traffic. As such, bike-sharing programs have become very popular and in turn provide a wealth of data on the mobility in a city.
 
-Bike rentals where the customer can pick up and drop off a bike at their leisure at several locations has become popular. This dataset outlines attributes related to the travel of customers. Data gathered by the rental companies includes things like the date, temperature, count of users, humidity and more. The collection of attributes has the potential to assist researchers in developing an understanding of the mobility in a city. 
+Data gathered by the rental companies includes things like temperature, count of users, humidity and more. The explicit collection of data has the potential to assist in understanding the highs and lows of bike demand which could influence; when to offer a sale, which areas require redistribution, and in general when the best time to offer rentals is. Future data to inquire about and include could be the demographics of the city, the style of current marketing and how often redistribution is needed.
 
 
 \pagebreak
@@ -610,6 +611,8 @@ An attempt to make the time series more stationary was made with a 24th order di
 
 - **RMSE** `r round(rmse.arma.forecasts.one.day.s24, 3)`
 
+\pagebreak
+
 
 ```{r aic5-wge-june-2012, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 
@@ -690,6 +693,14 @@ forecasts.arma.25.1.seven.days[forecasts.arma.25.1.seven.days < 0] <- 1
 
 ```
 
+### 7 Day Forecast
+
+```{r arma-seven-days-forecast-prediction-limits, message=FALSE, echo=FALSE}
+
+knitr::kable(head(data.frame(forecast.2012.june$f, forecast.2012.june$ll, forecast.2012.june$ul), 30), "latex", booktabs = T)
+
+```
+
 
 ```{r arma-forecasts-seven-days-three, message=FALSE, echo=FALSE, warning=FALSE}
 
@@ -744,6 +755,16 @@ forecasts.arma.25.1.one.day[forecasts.arma.25.1.one.day < 0] <- 1
 ```
 
 \pagebreak
+
+### 1 Day Forecast
+
+
+```{r arma-one-day-forecast-prediction-limits, message=FALSE, echo=FALSE}
+
+knitr::kable(data.frame(forecast.2012.june$f, forecast.2012.june$ll, forecast.2012.june$ul), "latex", booktabs = T)
+
+```
+
 
 ```{r arma-forecasts-one-day-three, message=FALSE, echo=FALSE, warning=FALSE}
 
@@ -1325,6 +1346,11 @@ kable(data.frame('Model' = c('ARMA', 'VAR', 'MLP', 'Ensemble'),
 
 ```
 
+\vspace{5mm}
+
+Here, we include the ensemble model error to compare. Our ensemble is built out of a rounded average between VAR and MLP. It turns out that for the 7-day, “long-term”, forecast the MLP performs best. Followed by the ensemble, var and then finally arma. Var likely performs better because it considers other data that happened at the same time compared to a strict ARMA(25,1). Similarly, the MLP model may perform well because of its ability to use multiple layers to understand how all the time series work together, with lag in mind. 
+
+
 \pagebreak
 
 ## 1 Day Forecast
@@ -1374,6 +1400,11 @@ kable(data.frame('Model' = c('ARMA', 'VAR', 'MLP', 'Ensemble'),
 
 
 ```
+
+\vspace{5mm}
+
+VAR was the preferred method for short term forecasts.  But note that the first six observations all have 1s as these were imputed.  VAR had a tendency to predict negative values early on, which wouldn’t make any sense given that our hourly counts should never be zero or less.  And it turns out that there were not any observations with fewer than one.  
+
 
 
 \pagebreak
