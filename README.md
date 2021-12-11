@@ -32,7 +32,7 @@ The [data description](https://www.kaggle.com/c/bike-sharing-demand/overview) pr
 
 ## Codebook
 
-The [Codebook](www.google.com) provides additional details regarding the session information of the environment.
+The [Codebook](https://github.com/RobinsonCW/TimeSeriesBikeRentalDemand/blob/main/CodeBook.md) provides additional details regarding the session information of the environment.
 
 ## Repo Structure
     .
